@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
-import { Compass, HeartHandshake, MapPin, Shield } from 'lucide-react';
+import { AlertCircle, Compass, MapPin, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { routes } from '../../app/routes';
 import { homeCopy } from '../../content/copy/home';
@@ -35,21 +35,21 @@ export function HomeScreen() {
             </Card>
           </section>
 
-          <section className="grid grid-cols-1 gap-stack-md max-w-xl w-full items-stretch text-left">
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-stack-sm max-w-5xl w-full mx-auto">
             <ActionCard
-              icon={<HeartHandshake size={24} />}
+              icon={<AlertCircle className="text-[#F59E0B]" size={22} fill="#F59E0B" color="#fff" />}
               label={supportAction.label}
               description={supportAction.description}
               onClick={() => navigate(routes.support)}
             />
             <ActionCard
-              icon={<Compass size={24} />}
+              icon={<Compass size={22} />}
               label={orientationAction.label}
               description={orientationAction.description}
               onClick={() => navigate(routes.orientation)}
             />
             <ActionCard
-              icon={<MapPin size={24} />}
+              icon={<MapPin size={22} />}
               label={contactsAction.label}
               description={contactsAction.description}
               onClick={() => navigate(routes.contacts)}

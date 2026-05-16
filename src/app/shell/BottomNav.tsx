@@ -23,14 +23,14 @@ export function BottomNav() {
           className={({ isActive }) =>
             `flex flex-col items-center justify-center min-h-14 px-1 py-1 duration-200 ease-in-out font-label-md rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
               isActive
-                ? 'bg-primary text-on-primary'
+                ? 'bg-primary-container text-on-primary-container'
                 : 'text-on-surface-variant hover:text-primary'
             }`
           }
         >
           {({ isActive }) => (
             <>
-              <Icon size={22} className="mb-1" strokeWidth={isActive ? 2.5 : 2} />
+              <Icon size={22} fill={isActive ? 'currentColor' : 'none'} className="mb-1" strokeWidth={isActive ? 2.5 : 2} />
               <span className="text-[11px] leading-tight">{label}</span>
             </>
           )}

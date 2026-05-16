@@ -4,11 +4,11 @@ Review of the state after commit `87234c9` (Fronts 01-04 implementation).
 
 ---
 
-## 1. "Como funciona" section placement and styling
+## 1. "Como funciona" section duplicated onboarding
 
 **File:** `src/features/home/HomeScreen.tsx`
 
-The "Como funciona" section is positioned below the three main ActionCard buttons. It uses minimal styling (`bg-surface-container-low`, no accent colors, no visual emphasis) which makes it blend into the background. On a screen meant to guide the user, this section should have more presence.
+The "Como funciona" section duplicated the app-style starting screen. Now that onboarding exists as the first-run explanation layer, this section should stay out of Home. Home should focus on trust, the privacy reassurance, and the three main action paths.
 
 ---
 
@@ -65,7 +65,7 @@ The BottomNav has only 4 items: Início, Orientação, Contatos, Apoio. The `/ed
 
 | # | Issue | Severity | File(s) |
 |---|---|---|---|
-| 1 | "Como funciona" weak styling and placement | Medium | `src/features/home/HomeScreen.tsx` |
+| 1 | "Como funciona" duplicates onboarding | Medium | `src/features/home/HomeScreen.tsx` |
 | 2 | Missing special characters in PT-BR text | High | All content and screen files |
 | 3 | Alarming icon on support button | Medium | `src/features/home/HomeScreen.tsx` |
 | 4 | "Respire por um momento" lacks visual treatment | Low | `src/features/support/SupportScreen.tsx` |

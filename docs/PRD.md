@@ -116,7 +116,8 @@ It should include:
 - brief explanation of the app’s philosophy;
 - privacy/anonymity reassurance;
 - three equal-weight entry paths;
-- access to “how this works” or onboarding-style explanation.
+
+The app-style starting screen is the onboarding-style explanation. Do not duplicate it as a visible “Como funciona” card or section on Home; Home should become actionable after onboarding.
 
 ### Entry Paths
 
@@ -132,7 +133,7 @@ Immediate support remains persistently available through the bottom navigation.
 
 A mobile-app-style onboarding may be implemented, but any persistence of “already seen” status must be reviewed by the Privacy/LGPD front.
 
-Until then, onboarding may be presented as a regular “Como funciona” section.
+When onboarding is implemented as the app starting screen, Home must not include a regular “Como funciona” section. If repeat access is needed later, use a distinct help/onboarding route or settings entry.
 
 ---
 

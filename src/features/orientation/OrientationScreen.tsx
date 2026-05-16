@@ -89,7 +89,12 @@ export function OrientationScreen() {
             </div>
           </div>
 
-          <div className="flex flex-1 flex-col gap-stack-md overflow-y-auto px-4 py-5 md:px-6" aria-live="polite">
+          <div
+            className="flex flex-1 flex-col gap-stack-md overflow-y-auto px-4 py-5 md:px-6"
+            role="log"
+            aria-label="Histórico da orientação guiada"
+            aria-live="polite"
+          >
             {state.transcript.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
@@ -164,6 +169,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             : 'rounded-bl-sm border border-outline-variant/40 bg-[#EEF8F3] text-on-surface'
         }`}
       >
+        <span className="sr-only">{isUser ? 'Você' : 'SeCuida'}</span>
         <p className="font-body-md">{message.text}</p>
       </div>
     </div>

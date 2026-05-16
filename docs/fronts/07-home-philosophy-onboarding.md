@@ -30,8 +30,9 @@ Home should not feel like a dashboard or a clinical form.
 2. Short philosophy statement.
 3. Trust strip.
 4. Three equal-weight entry paths.
-5. Optional “how this works” card.
-6. Quiet link to learn more.
+5. Quiet link to learn more only if it points to a distinct, useful destination.
+
+Do not add a regular “Como funciona” card or section to Home when the app-style starting screen exists. The starting screen is the explanation layer; repeating it on Home makes the first actionable screen heavier and should be treated as a regression.
 
 ---
 
@@ -78,10 +79,11 @@ Possible onboarding screens:
 
 Because one-time onboarding may require remembering that the user has already seen it, persistence must be reviewed by the Privacy/LGPD front.
 
-Interim option:
+Current product decision:
 
-* Make onboarding accessible from Home as a regular “Como funciona” section.
-* Do not persist completion until privacy policy allows it.
+* Use the app-style starting screen as the onboarding explanation.
+* Do not duplicate that explanation as a “Como funciona” section on Home.
+* If users need to revisit onboarding later, add an explicit route or settings/help entry instead of placing the full explanation on Home.
 
 ---
 
@@ -108,4 +110,5 @@ Immediate support remains available through the persistent Support tab.
 * Three primary paths have equal visual weight.
 * Immediate support is accessible through persistent navigation.
 * Home does not overuse alarming language.
+* Home does not include a duplicate “Como funciona” section when onboarding is present.
 * Any one-time onboarding persistence is privacy-reviewed before implementation.

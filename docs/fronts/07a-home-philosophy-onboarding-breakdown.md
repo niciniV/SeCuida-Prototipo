@@ -18,7 +18,7 @@ The goal is to make Home clearly explain SeCuida's purpose, privacy posture, non
 
 ## Current State
 
-The prototype Home introduces confidentiality and three user choices, but the real product needs stronger trust-building, clearer philosophy, and an optional “Como funciona” onboarding-style section.
+The prototype Home introduces confidentiality and three user choices. The app-style starting screen now carries the onboarding explanation, so Home should stay focused on trust and next actions instead of repeating a “Como funciona” section.
 
 After Front 04A, Home copy may already live in `src/content/copy/home.ts`.
 
@@ -30,10 +30,11 @@ After Front 04A, Home copy may already live in `src/content/copy/home.ts`.
 2. short philosophy statement;
 3. privacy/trust strip;
 4. three equal-weight entry paths;
-5. “Como funciona” section;
-6. quiet links to privacy and education content.
+5. quiet links to privacy and education content if they are distinct from onboarding.
 
 Home should answer what SeCuida is, whether it is anonymous, whether it is diagnostic, and what the user can do next.
+
+Guardrail: do not add `howItWorksTitle`, `howItWorksItems`, a `HowItWorks` component, or a visible “Como funciona” Home section while the app-style starting screen exists. The starting screen already explains how SeCuida works.
 
 ---
 
@@ -43,7 +44,8 @@ Do not implement one-time onboarding persistence in this front.
 
 Recommended first version:
 
-- build onboarding as a regular Home section or route-accessible content;
+- keep onboarding in the app-style starting screen;
+- do not duplicate onboarding as a regular Home section;
 - no `localStorage` completion flag;
 - no cookies;
 - no account or backend state;
@@ -57,7 +59,7 @@ Recommended first version:
 
 Scope:
 
-1. expand `src/content/copy/home.ts` with philosophy, trust strip, entry paths, and “Como funciona” copy;
+1. expand `src/content/copy/home.ts` with philosophy, trust strip, and entry paths;
 2. add metadata/review fields where appropriate;
 3. keep copy Portuguese-first and non-clinical.
 
@@ -83,18 +85,18 @@ Acceptance criteria:
 - immediate support remains available through persistent navigation;
 - no alarming visual hierarchy is introduced.
 
-### PR 07C — Add Non-Persistent “Como Funciona” Experience
+### PR 07C — Keep Onboarding Explanation Out Of Home
 
 Scope:
 
-1. add a “Como funciona” card/section;
-2. explain privacy, non-diagnosis, guided orientation, resources, and professional support;
-3. avoid completion state or “seen” persistence.
+1. keep the onboarding explanation in the app-style starting screen;
+2. do not add a duplicate “Como funciona” card/section to Home;
+3. if repeat access is needed, add a separate help/onboarding route instead of crowding Home.
 
 Acceptance criteria:
 
-- onboarding-style information is accessible repeatedly;
-- closing or reading it does not write persistent state;
+- Home has no “Como funciona” section when onboarding is enabled;
+- Home copy model does not include `howItWorksTitle` or `howItWorksItems`;
 - copy aligns with PRD privacy and safety principles.
 
 ---
@@ -107,7 +109,6 @@ src/domain/copy/types.ts
 src/features/home/HomeScreen.tsx
 src/features/home/components/TrustStrip.tsx
 src/features/home/components/HomeEntryPaths.tsx
-src/features/home/components/HowItWorks.tsx
 src/tests/home/*.test.tsx
 ```
 
