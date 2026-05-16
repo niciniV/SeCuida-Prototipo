@@ -179,6 +179,54 @@ describe('validateFlow', () => {
       'Flow entry is required. Flow nodes are required.',
     );
   });
+
+  it('rejects score branch nodes with broken next references', () => {
+    const invalidFlow: GuidedFlow = {
+      ...scoringFlow,
+      nodes: {
+        ...scoringFlow.nodes,
+        'score-branch': {
+          id: 'score-branch',
+          kind: 'score_branch',
+          text: 'Calculando.',
+          scoreKey: 'fixture-score',
+          branches: [{ id: 'broken', min: 0, max: 1, next: 'missing-result' }],
+        },
+      },
+    };
+
+    expect(validateFlow(invalidFlow)).toEqual({
+      valid: false,
+      errors: ['Flow scoring-flow score branch score-branch branch broken points to missing node missing-result.'],
+    });
+  });
+
+  it('rejects score effects without a score key', () => {
+    const invalidFlow: GuidedFlow = {
+      ...scoringFlow,
+      nodes: {
+        ...scoringFlow.nodes,
+        q1: {
+          id: 'q1',
+          kind: 'choice',
+          text: 'Pergunta inválida.',
+          options: [
+            {
+              id: 'bad',
+              label: 'Inválida',
+              next: 'score-branch',
+              effects: [{ kind: 'score', scoreKey: '', value: 1 }],
+            },
+          ],
+        },
+      },
+    };
+
+    expect(validateFlow(invalidFlow)).toEqual({
+      valid: false,
+      errors: ['Flow scoring-flow option bad score effect must include scoreKey and numeric value.'],
+    });
+  });
 });
 
 describe('flow runtime', () => {

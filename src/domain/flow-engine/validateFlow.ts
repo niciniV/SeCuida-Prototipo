@@ -1,4 +1,4 @@
-import type { ChoiceFlowNode, FlowNode, FlowValidationResult, GuidedFlow } from './types';
+import type { ChoiceFlowNode, FlowEffect, FlowNode, FlowValidationResult, ScoreBranchFlowNode } from './types';
 
 function hasText(value: unknown) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -77,6 +77,11 @@ function validateNode(flowLabel: string, nodeKey: string, nodeValue: unknown, no
 
   if (node.kind === 'choice') {
     validateChoiceNode(flowLabel, node, nodeIds, errors);
+    return;
+  }
+
+  if (node.kind === 'score_branch') {
+    validateScoreBranchNode(flowLabel, node, nodeIds, errors);
   }
 }
 
@@ -97,5 +102,44 @@ function validateChoiceNode(flowLabel: string, node: ChoiceFlowNode, nodeIds: Se
     if (!nodeIds.has(option.next)) {
       errors.push(`Flow ${flowLabel} option ${option.id} points to missing node ${option.next}.`);
     }
+
+    option.effects?.forEach((effect) => validateEffect(flowLabel, option.id, effect, errors));
   });
+}
+
+function validateScoreBranchNode(flowLabel: string, node: ScoreBranchFlowNode, nodeIds: Set<string>, errors: string[]) {
+  if (!hasText(node.scoreKey)) {
+    errors.push(`Flow ${flowLabel} score branch ${node.id} must include a scoreKey.`);
+  }
+
+  if (!Array.isArray(node.branches) || node.branches.length === 0) {
+    errors.push(`Flow ${flowLabel} score branch ${node.id} must include branches.`);
+    return;
+  }
+
+  node.branches.forEach((branch) => {
+    if (!hasText(branch.id) || typeof branch.min !== 'number' || typeof branch.max !== 'number') {
+      errors.push(`Flow ${flowLabel} score branch ${node.id} has an invalid branch.`);
+      return;
+    }
+
+    if (!nodeIds.has(branch.next)) {
+      errors.push(`Flow ${flowLabel} score branch ${node.id} branch ${branch.id} points to missing node ${branch.next}.`);
+    }
+  });
+}
+
+function validateEffect(flowLabel: string, optionId: string, effect: FlowEffect, errors: string[]) {
+  if (effect.kind === 'score') {
+    if (!hasText(effect.scoreKey) || typeof effect.value !== 'number') {
+      errors.push(`Flow ${flowLabel} option ${optionId} score effect must include scoreKey and numeric value.`);
+    }
+    return;
+  }
+
+  if (effect.kind === 'safety_interrupt') {
+    if (!hasText(effect.message) || !hasText(effect.destination) || typeof effect.blockResume !== 'boolean') {
+      errors.push(`Flow ${flowLabel} option ${optionId} safety interrupt effect must include message, destination, and blockResume.`);
+    }
+  }
 }
