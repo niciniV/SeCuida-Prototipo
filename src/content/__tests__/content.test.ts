@@ -98,7 +98,7 @@ describe('Resources content', () => {
 describe('Flow registry', () => {
   it('contains switchable guided conversation flows', () => {
     expect(flowRegistry.flows.length).toBeGreaterThan(1);
-    expect(flowRegistry.flows.map((flow) => flow.id)).toEqual(['work-stress', 'rest-recovery']);
+    expect(flowRegistry.flows.map((flow) => flow.id)).toEqual(['work-stress', 'rest-recovery', 'srq20']);
     flowRegistry.flows.forEach((flow) => {
       expect(flow.type).toBe('guided_conversation');
       expect(flow.entry.enteringPhrases.length).toBeGreaterThan(0);
