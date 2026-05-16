@@ -57,6 +57,8 @@ export function createInitialFlowState(flow: GuidedFlow, flows: GuidedFlow[]): F
 }
 
 export function createInitialFlowStateFromRegistry(flows: GuidedFlow[], preferredFlowId?: string): FlowRuntimeState {
+  validateRegisteredFlows(flows);
+
   const flow = preferredFlowId ? getFlowById(flows, preferredFlowId) : flows[0];
 
   if (!flow) {
@@ -64,4 +66,12 @@ export function createInitialFlowStateFromRegistry(flows: GuidedFlow[], preferre
   }
 
   return createInitialFlowState(flow, flows);
+}
+
+export function validateRegisteredFlows(flows: GuidedFlow[]) {
+  const errors = flows.flatMap((flow) => validateFlow(flow).errors);
+
+  if (errors.length > 0) {
+    throw new Error(errors.join(' '));
+  }
 }

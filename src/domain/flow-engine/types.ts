@@ -3,7 +3,7 @@ import type { ContentLocale, ContentStatus } from '../content/types';
 export type FlowType = 'guided_conversation';
 export type FlowNodeKind = 'choice' | 'result';
 export type ChatMessageSender = 'bot' | 'user';
-export type RuntimeOptionKind = 'node_option' | 'entry_phrase' | 'global_action';
+export type RuntimeOptionKind = 'node_option' | 'entry_phrase' | 'global_action' | 'resume_flow';
 export type GlobalActionTarget = '/apoio' | '/contatos' | '/educacao' | 'end';
 
 export interface FlowEntry {
@@ -92,7 +92,14 @@ export interface RuntimeGlobalAction {
   target: GlobalActionTarget;
 }
 
-export type RuntimeOption = RuntimeNodeOption | RuntimeEntryOption | RuntimeGlobalAction;
+export interface RuntimeResumeOption {
+  kind: 'resume_flow';
+  id: string;
+  label: string;
+  flowId: string;
+}
+
+export type RuntimeOption = RuntimeNodeOption | RuntimeEntryOption | RuntimeGlobalAction | RuntimeResumeOption;
 
 export interface FlowValidationResult {
   valid: boolean;

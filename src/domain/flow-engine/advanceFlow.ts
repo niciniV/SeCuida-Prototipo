@@ -1,5 +1,6 @@
 import { createInitialFlowState, createMessage, getActiveFlow, getFlowById } from './loadFlows';
 import { resolveOptions } from './resolveOptions';
+import { resumeFlow } from './resumeFlow';
 import { suspendFlow } from './suspendFlow';
 import type { FlowRuntimeState, GuidedFlow, RuntimeOption } from './types';
 
@@ -11,8 +12,16 @@ export function advanceFlow(state: FlowRuntimeState, flows: GuidedFlow[], select
     throw new Error(`Selection ${selectedLabel} is not available for node ${activeNodeId}.`);
   }
 
+  if (selectedOption.kind === 'global_action' && selectedOption.target === 'end') {
+    return endFlow(state, selectedOption.label);
+  }
+
   if (selectedOption.kind === 'global_action') {
     return appendUserMessage(state, selectedOption, state.activeFlowId ?? 'global');
+  }
+
+  if (selectedOption.kind === 'resume_flow') {
+    return resumeFlow(state, selectedOption.flowId);
   }
 
   if (selectedOption.kind === 'entry_phrase') {
@@ -39,6 +48,21 @@ export function advanceFlow(state: FlowRuntimeState, flows: GuidedFlow[], select
       ...state.answers,
       [state.activeNodeId ?? activeFlow.entry.nodeId]: selectedOption.id,
     },
+  };
+}
+
+function endFlow(state: FlowRuntimeState, selectedLabel: string): FlowRuntimeState {
+  const flowId = state.activeFlowId ?? 'global';
+
+  return {
+    ...state,
+    activeFlowId: undefined,
+    activeNodeId: undefined,
+    transcript: [
+      ...state.transcript,
+      createMessage('user', selectedLabel, flowId, state.activeNodeId),
+      createMessage('bot', 'Tudo bem. Você pode retomar uma orientação quando quiser.', flowId),
+    ],
   };
 }
 

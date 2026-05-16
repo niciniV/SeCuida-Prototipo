@@ -1,5 +1,6 @@
 import type { FlowRuntimeState, GuidedFlow, RuntimeGlobalAction, RuntimeOption } from './types';
 import { getActiveFlow } from './loadFlows';
+import { canResumeFlow } from './safetyRules';
 
 export const globalFlowActions: RuntimeGlobalAction[] = [
   { kind: 'global_action', id: 'support-now', label: 'Quero apoio agora', target: '/apoio' },
@@ -9,6 +10,10 @@ export const globalFlowActions: RuntimeGlobalAction[] = [
 ];
 
 export function resolveOptions(state: FlowRuntimeState, flows: GuidedFlow[]): RuntimeOption[] {
+  if (!state.activeFlowId || !state.activeNodeId) {
+    return globalFlowActions.filter((action) => action.target !== 'end');
+  }
+
   const activeFlow = getActiveFlow(state, flows);
   const activeNode = state.activeNodeId ? activeFlow.nodes[state.activeNodeId] : undefined;
   const currentNodeOptions: RuntimeOption[] =
@@ -33,5 +38,20 @@ export function resolveOptions(state: FlowRuntimeState, flows: GuidedFlow[]): Ru
       })),
     );
 
-  return [...currentNodeOptions, ...entryPhraseOptions, ...globalFlowActions];
+  const resumeOptions: RuntimeOption[] =
+    activeNode?.kind === 'result'
+      ? Object.values(state.suspendedFlows)
+          .filter((suspendedFlow) => canResumeFlow(state, suspendedFlow.flowId))
+          .map((suspendedFlow) => {
+            const flow = flows.find((candidate) => candidate.id === suspendedFlow.flowId);
+            return {
+              kind: 'resume_flow',
+              id: `resume-${suspendedFlow.flowId}`,
+              label: `Retomar ${flow?.title ?? suspendedFlow.flowId}`,
+              flowId: suspendedFlow.flowId,
+            };
+          })
+      : [];
+
+  return [...currentNodeOptions, ...entryPhraseOptions, ...resumeOptions, ...globalFlowActions];
 }

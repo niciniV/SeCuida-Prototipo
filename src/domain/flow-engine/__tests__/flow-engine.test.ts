@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { advanceFlow } from '../advanceFlow';
-import { createInitialFlowState } from '../loadFlows';
+import { createInitialFlowState, createInitialFlowStateFromRegistry } from '../loadFlows';
 import { resolveOptions } from '../resolveOptions';
 import { resumeFlow } from '../resumeFlow';
 import { suspendFlow } from '../suspendFlow';
@@ -35,6 +35,33 @@ const validFlow: GuidedFlow = {
   },
 };
 
+const secondFlow: GuidedFlow = {
+  id: 'second-flow',
+  version: '1.0.0',
+  locale: 'pt-BR',
+  title: 'Segundo fluxo',
+  type: 'guided_conversation',
+  status: 'draft',
+  entry: {
+    nodeId: 'start',
+    enteringPhrases: ['Quero trocar de assunto'],
+    transitionMessage: 'Vamos olhar para outro ponto com calma.',
+  },
+  nodes: {
+    start: {
+      id: 'start',
+      kind: 'choice',
+      text: 'Por onde você quer começar?',
+      options: [{ id: 'finish', label: 'Finalizar este caminho', next: 'end' }],
+    },
+    end: {
+      id: 'end',
+      kind: 'result',
+      text: 'Este caminho terminou.',
+    },
+  },
+};
+
 describe('validateFlow', () => {
   it('accepts a JSON-compatible guided flow with explicit entering phrases', () => {
     expect(validateFlow(validFlow)).toEqual({ valid: true, errors: [] });
@@ -57,6 +84,32 @@ describe('validateFlow', () => {
       valid: false,
       errors: ['Flow fixture-flow option missing points to missing node missing-node.'],
     });
+  });
+
+  it('returns validation errors for malformed JSON-shaped content instead of throwing', () => {
+    expect(validateFlow({})).toEqual({
+      valid: false,
+      errors: [
+        'Flow id is required.',
+        'Flow entry is required.',
+        'Flow nodes are required.',
+      ],
+    });
+  });
+
+  it('rejects node key and id mismatches', () => {
+    const invalidFlow: GuidedFlow = {
+      ...validFlow,
+      nodes: {
+        start: {
+          ...validFlow.nodes.start,
+          id: 'different-start',
+        },
+        end: validFlow.nodes.end,
+      },
+    };
+
+    expect(validateFlow(invalidFlow).errors).toContain('Flow fixture-flow node key start must match node id different-start.');
   });
 });
 
@@ -91,6 +144,62 @@ describe('flow runtime', () => {
 
     expect(labels).toContain('Continuar');
     expect(labels).toContain('Quero apoio agora');
+  });
+
+  it('validates every registered flow before creating initial state', () => {
+    const invalidRegisteredFlow: GuidedFlow = {
+      ...secondFlow,
+      nodes: {
+        ...secondFlow.nodes,
+        start: {
+          ...secondFlow.nodes.start,
+          kind: 'choice',
+          options: [{ id: 'bad', label: 'Opção inválida', next: 'missing' }],
+        },
+      },
+    };
+
+    expect(() => createInitialFlowStateFromRegistry([validFlow, invalidRegisteredFlow], 'fixture-flow')).toThrow(
+      'Flow second-flow option bad points to missing node missing.',
+    );
+  });
+
+  it('switches flows through another flow entry phrase without merging answers', () => {
+    const answeredState = advanceFlow(createInitialFlowState(validFlow, [validFlow, secondFlow]), [validFlow, secondFlow], 'Continuar');
+    const switchedState = advanceFlow(answeredState, [validFlow, secondFlow], 'Quero trocar de assunto');
+
+    expect(switchedState.activeFlowId).toBe('second-flow');
+    expect(switchedState.activeNodeId).toBe('start');
+    expect(switchedState.answers).toEqual({});
+    expect(switchedState.suspendedFlows['fixture-flow']?.answers).toEqual({ start: 'continue' });
+    expect(switchedState.transcript.map((message) => message.text)).toEqual([
+      'Vamos olhar para outro ponto com calma.',
+      'Por onde você quer começar?',
+    ]);
+  });
+
+  it('offers resume only from result nodes when safety rules allow it', () => {
+    const switchedState = advanceFlow(createInitialFlowState(validFlow, [validFlow, secondFlow]), [validFlow, secondFlow], 'Quero trocar de assunto');
+    const finishedSecondFlow = advanceFlow(switchedState, [validFlow, secondFlow], 'Finalizar este caminho');
+
+    expect(resolveOptions(finishedSecondFlow, [validFlow, secondFlow]).map((option) => option.label)).toContain('Retomar Fluxo de teste');
+
+    const safetyBlockedState = {
+      ...finishedSecondFlow,
+      safetyFlags: { 'block-resume:fixture-flow': true },
+    };
+
+    expect(resolveOptions(safetyBlockedState, [validFlow, secondFlow]).map((option) => option.label)).not.toContain('Retomar Fluxo de teste');
+  });
+
+  it('ends the active flow when the end action is selected', () => {
+    const state = createInitialFlowState(validFlow, [validFlow]);
+    const endedState = advanceFlow(state, [validFlow], 'Encerrar por enquanto');
+
+    expect(endedState.activeFlowId).toBeUndefined();
+    expect(endedState.activeNodeId).toBeUndefined();
+    expect(endedState.transcript.at(-1)?.text).toBe('Tudo bem. Você pode retomar uma orientação quando quiser.');
+    expect(resolveOptions(endedState, [validFlow]).some((option) => option.kind === 'node_option')).toBe(false);
   });
 
   it('suspends and resumes a flow in memory', () => {

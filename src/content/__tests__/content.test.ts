@@ -96,10 +96,12 @@ describe('Resources content', () => {
 });
 
 describe('Flow registry', () => {
-  it('contains the first guided conversation flow', () => {
-    expect(flowRegistry.flows).toHaveLength(1);
-    expect(flowRegistry.flows[0]?.id).toBe('work-stress');
-    expect(flowRegistry.flows[0]?.type).toBe('guided_conversation');
-    expect(flowRegistry.flows[0]?.entry.enteringPhrases.length).toBeGreaterThan(0);
+  it('contains switchable guided conversation flows', () => {
+    expect(flowRegistry.flows.length).toBeGreaterThan(1);
+    expect(flowRegistry.flows.map((flow) => flow.id)).toEqual(['work-stress', 'rest-recovery']);
+    flowRegistry.flows.forEach((flow) => {
+      expect(flow.type).toBe('guided_conversation');
+      expect(flow.entry.enteringPhrases.length).toBeGreaterThan(0);
+    });
   });
 });

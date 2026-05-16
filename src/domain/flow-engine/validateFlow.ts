@@ -1,37 +1,54 @@
-import type { ChoiceFlowNode, FlowValidationResult, GuidedFlow } from './types';
+import type { ChoiceFlowNode, FlowNode, FlowValidationResult, GuidedFlow } from './types';
 
-function hasText(value: string | undefined) {
-  return Boolean(value?.trim());
+function hasText(value: unknown) {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
-export function validateFlow(flow: GuidedFlow): FlowValidationResult {
-  const errors: string[] = [];
-  const nodeIds = new Set(Object.keys(flow.nodes));
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
-  if (!hasText(flow.id)) {
+export function validateFlow(flow: unknown): FlowValidationResult {
+  const errors: string[] = [];
+  const flowRecord = isRecord(flow) ? flow : {};
+  const flowId = hasText(flowRecord.id) ? String(flowRecord.id) : '';
+  const flowLabel = flowId || 'unknown';
+  const entry = flowRecord.entry;
+  const nodes = flowRecord.nodes;
+
+  if (!hasText(flowRecord.id)) {
     errors.push('Flow id is required.');
   }
 
-  if (!nodeIds.has(flow.entry.nodeId)) {
-    errors.push(`Flow ${flow.id} entry points to missing node ${flow.entry.nodeId}.`);
+  if (!isRecord(entry)) {
+    errors.push('Flow entry is required.');
   }
 
-  if (flow.entry.enteringPhrases.length === 0 || flow.entry.enteringPhrases.some((phrase) => !hasText(phrase))) {
-    errors.push(`Flow ${flow.id} must define explicit entering phrases.`);
+  if (!isRecord(nodes)) {
+    errors.push('Flow nodes are required.');
   }
 
-  Object.values(flow.nodes).forEach((node) => {
-    if (!hasText(node.id)) {
-      errors.push(`Flow ${flow.id} has a node without an id.`);
-    }
+  if (!isRecord(entry) || !isRecord(nodes)) {
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
 
-    if (!hasText(node.text)) {
-      errors.push(`Flow ${flow.id} node ${node.id} must include text.`);
-    }
+  const nodeIds = new Set(Object.keys(nodes));
+  const entryNodeId = entry.nodeId;
+  const enteringPhrases = entry.enteringPhrases;
 
-    if (node.kind === 'choice') {
-      validateChoiceNode(flow, node, nodeIds, errors);
-    }
+  if (!hasText(entryNodeId) || !nodeIds.has(String(entryNodeId))) {
+    errors.push(`Flow ${flowLabel} entry points to missing node ${String(entryNodeId)}.`);
+  }
+
+  if (!Array.isArray(enteringPhrases) || enteringPhrases.length === 0 || enteringPhrases.some((phrase) => !hasText(phrase))) {
+    errors.push(`Flow ${flowLabel} must define explicit entering phrases.`);
+  }
+
+  Object.entries(nodes).forEach(([nodeKey, nodeValue]) => {
+    validateNode(flowLabel, nodeKey, nodeValue, nodeIds, errors);
   });
 
   return {
@@ -40,22 +57,45 @@ export function validateFlow(flow: GuidedFlow): FlowValidationResult {
   };
 }
 
-function validateChoiceNode(flow: GuidedFlow, node: ChoiceFlowNode, nodeIds: Set<string>, errors: string[]) {
+function validateNode(flowLabel: string, nodeKey: string, nodeValue: unknown, nodeIds: Set<string>, errors: string[]) {
+  if (!isRecord(nodeValue)) {
+    errors.push(`Flow ${flowLabel} node ${nodeKey} must be an object.`);
+    return;
+  }
+
+  const node = nodeValue as unknown as FlowNode;
+
+  if (!hasText(node.id)) {
+    errors.push(`Flow ${flowLabel} has a node without an id.`);
+  } else if (nodeKey !== node.id) {
+    errors.push(`Flow ${flowLabel} node key ${nodeKey} must match node id ${node.id}.`);
+  }
+
+  if (!hasText(node.text)) {
+    errors.push(`Flow ${flowLabel} node ${String(node.id)} must include text.`);
+  }
+
+  if (node.kind === 'choice') {
+    validateChoiceNode(flowLabel, node, nodeIds, errors);
+  }
+}
+
+function validateChoiceNode(flowLabel: string, node: ChoiceFlowNode, nodeIds: Set<string>, errors: string[]) {
   if (node.options.length === 0) {
-    errors.push(`Flow ${flow.id} choice node ${node.id} must include options.`);
+    errors.push(`Flow ${flowLabel} choice node ${node.id} must include options.`);
   }
 
   node.options.forEach((option) => {
     if (!hasText(option.id)) {
-      errors.push(`Flow ${flow.id} node ${node.id} has an option without an id.`);
+      errors.push(`Flow ${flowLabel} node ${node.id} has an option without an id.`);
     }
 
     if (!hasText(option.label)) {
-      errors.push(`Flow ${flow.id} option ${option.id} must include a label.`);
+      errors.push(`Flow ${flowLabel} option ${option.id} must include a label.`);
     }
 
     if (!nodeIds.has(option.next)) {
-      errors.push(`Flow ${flow.id} option ${option.id} points to missing node ${option.next}.`);
+      errors.push(`Flow ${flowLabel} option ${option.id} points to missing node ${option.next}.`);
     }
   });
 }
