@@ -50,6 +50,35 @@ describe('OrientationScreen', () => {
     expect(screen.getAllByText('SeCuida')).toHaveLength(2);
   });
 
+  it('starts SRQ-20 through chatbot autocomplete from JSON flow content', () => {
+    render(
+      <MemoryRouter>
+        <OrientationScreen />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Digite ou escolha uma opção'), {
+      target: { value: 'SRQ-20' },
+    });
+
+    fireEvent.click(screen.getByRole('option', { name: 'Quero responder o SRQ-20' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar opção selecionada' }));
+
+    expect(screen.getByText(/Este é o SRQ-20/i)).toBeInTheDocument();
+    expect(screen.getByText(/Antes de começar/i)).toBeInTheDocument();
+  });
+
+  it('does not render a questionnaire-specific screen entry', () => {
+    render(
+      <MemoryRouter>
+        <OrientationScreen />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('link', { name: /SRQ-20/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Responder SRQ-20/i })).not.toBeInTheDocument();
+  });
+
   it('keeps the composer fixed as a chat input above the page navigation', () => {
     render(
       <MemoryRouter>

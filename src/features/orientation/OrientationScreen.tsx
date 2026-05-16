@@ -34,6 +34,12 @@ export function OrientationScreen() {
     }
   }, [state.transcript, visibleOptions.length]);
 
+  useEffect(() => {
+    if (state.pendingNavigation) {
+      navigate(state.pendingNavigation);
+    }
+  }, [navigate, state.pendingNavigation]);
+
   function selectOption(option: RuntimeOption) {
     setInputValue(option.label);
   }
@@ -64,7 +70,7 @@ export function OrientationScreen() {
           aria-label="Histórico da orientação guiada"
           aria-live="polite"
           ref={logRef}
-          className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-56 pt-5 [scrollbar-width:none] md:px-6 md:pb-48 [&::-webkit-scrollbar]:hidden"
+          className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-56 pt-5 [scrollbar:none] md:px-6 md:pb-48 [&::-webkit-scrollbar]:hidden"
         >
           {state.transcript.map((message) => (
             <MessageBubble key={message.id} message={message} />
@@ -74,14 +80,14 @@ export function OrientationScreen() {
         <form
           onSubmit={handleSubmit}
           data-testid="orientation-composer"
-          className="fixed bottom-[86px] left-0 right-0 z-40 mx-auto max-w-3xl px-container-padding-mobile md:bottom-6 md:px-container-padding-desktop"
+          className="fixed bottom-21.5 left-0 right-0 z-40 mx-auto max-w-3xl px-container-padding-mobile md:bottom-6 md:px-container-padding-desktop"
         >
           {visibleOptions.length > 0 && (
             <div
               id="orientation-suggestions"
               role="listbox"
               aria-label="Sugestões de resposta"
-              className="absolute bottom-[74px] right-container-padding-mobile z-20 flex max-h-40 max-w-[calc(100%-2.5rem)] flex-col items-end gap-2 overflow-y-auto md:right-container-padding-desktop md:max-w-[calc(100%-5rem)]"
+              className="absolute bottom-18.5 right-container-padding-mobile z-20 flex max-h-40 max-w-[calc(100%-2.5rem)] flex-col items-end gap-2 overflow-y-auto md:right-container-padding-desktop md:max-w-[calc(100%-5rem)]"
             >
               {visibleOptions.map((option) => (
                 <button
@@ -90,7 +96,7 @@ export function OrientationScreen() {
                   role="option"
                   aria-selected={exactOption?.id === option.id}
                   onClick={() => selectOption(option)}
-                  className={`min-h-10 w-fit max-w-full rounded-full px-4 py-2 text-left font-label-md shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                  className={`min-h-10 w-fit max-w-full rounded-full px-4 py-2 text-left font-label-md shadow-sm transition-colors focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     option.kind === 'global_action'
                       ? 'border border-outline-variant bg-surface-container-lowest text-secondary hover:border-secondary hover:bg-surface-container-low'
                       : 'bg-primary-fixed text-on-surface hover:bg-primary-fixed-dim'
@@ -121,7 +127,7 @@ export function OrientationScreen() {
               aria-label="Enviar opção selecionada"
               data-icon="send"
               disabled={!exactOption}
-              className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition-colors disabled:bg-secondary-container disabled:text-on-secondary-container"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition-colors disabled:bg-secondary-container disabled:text-on-secondary-container"
             >
               <Send size={21} aria-hidden="true" />
             </button>
@@ -141,7 +147,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       <div className={`flex max-w-[84%] flex-col gap-1 ${isUser ? 'items-end' : 'items-start'}`}>
         <span className="flex items-center gap-2 font-label-md text-on-surface-variant">
           {!isUser && (
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary" aria-hidden="true">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary" aria-hidden="true">
               <MessageCircle size={17} />
             </span>
           )}
@@ -158,7 +164,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         </div>
       </div>
       {isUser && (
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-container-low text-secondary" aria-hidden="true">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-secondary" aria-hidden="true">
           <User size={18} />
         </span>
       )}
