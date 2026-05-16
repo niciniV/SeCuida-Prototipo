@@ -1,10 +1,11 @@
-import { BookOpen, Brain, HeartHandshake, Home, Users } from 'lucide-react';
+import { Brain, Compass, GraduationCap, HeartHandshake, Home, Users } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 import { routes } from '../routes';
 
 const navItems = [
   { to: routes.home, label: 'Início', Icon: Home },
-  { to: routes.orientation, label: 'Orientação', Icon: BookOpen },
+  { to: routes.orientation, label: 'Orientação', Icon: Compass },
+  { to: routes.education, label: 'Estudos', Icon: GraduationCap },
   { to: routes.contacts, label: 'Contatos', Icon: Users },
   { to: routes.support, label: 'Apoio', Icon: HeartHandshake },
 ];
@@ -26,14 +27,14 @@ export function TopBar() {
               className={({ isActive }) =>
                 `font-label-md px-4 py-2 min-h-11 flex items-center gap-2 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                   isActive
-                    ? 'bg-primary-container text-on-primary-container'
+                    ? 'bg-primary text-on-primary'
                     : 'text-on-surface-variant hover:bg-surface-container-low'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={20} fill={isActive ? 'currentColor' : 'none'} />
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                   {label}
                 </>
               )}
@@ -44,4 +45,3 @@ export function TopBar() {
     </header>
   );
 }
-
