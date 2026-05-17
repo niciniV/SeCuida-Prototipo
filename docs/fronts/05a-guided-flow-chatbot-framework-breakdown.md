@@ -99,8 +99,7 @@ Typing may filter available choices, but submission must be limited to an existi
 The Orientation UI should preserve the feel of a soothing chat:
 
 - answer options float as bubbles above the input;
-- clicking a bubble only autocompletes the input;
-- the user must press the send button to submit;
+- clicking a bubble immediately sends the answer and advances the flow;
 - the send button is disabled until the input exactly matches one available option/action;
 - the suggestion list hides when the input strictly matches an option label and reappears when it no longer does;
 - current node answers appear by default, while global actions and entering phrases can appear when the user types a matching phrase;
@@ -171,7 +170,7 @@ Scope:
 
 1. build constrained chat UI components under the orientation feature;
 2. render bot/user messages from engine state;
-3. show options as floating chat bubbles that autocomplete the fixed composer;
+3. show options as floating chat bubbles that send immediately on click;
 4. wire global actions to routes;
 5. remove the old step/slider prototype if fully replaced.
 
@@ -179,7 +178,7 @@ Acceptance criteria:
 
 - Orientation screen runs from flow content;
 - user cannot submit arbitrary free text;
-- clicking suggestions does not submit or navigate until the send button is pressed;
+- clicking a suggestion immediately sends the answer and advances the flow;
 - the send button is disabled unless the input exactly matches an available option;
 - the suggestion list hides when the input strictly matches an option label and reappears when it no longer does;
 - the responsive layout avoids competing page and chat scroll regions;

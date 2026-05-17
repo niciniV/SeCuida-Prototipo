@@ -83,7 +83,7 @@ current node options
 + global support/navigation actions
 ```
 
-The visible UI should still feel like a conversation, not like a searchable form. In the Orientation screen, current node options appear as floating answer bubbles above the composer. Selecting one of these bubbles only fills the composer input; it does not submit the answer or navigate away. The send button becomes active only when the composer text exactly matches one available option/action, so arbitrary text cannot be submitted without adding warning copy. When the input strictly matches an option label, the suggestion list hides automatically — the user has already found their answer. If the input changes (e.g., trailing space), suggestions reappear.
+The visible UI should still feel like a conversation, not like a searchable form. In the Orientation screen, current node options appear as floating answer bubbles above the composer. Clicking one of these bubbles immediately sends the answer and advances the flow. The send button becomes active only when the composer text exactly matches one available option/action, so arbitrary text cannot be submitted without adding warning copy. When the input strictly matches an option label, the suggestion list hides automatically — the user has already found their answer. If the input changes (e.g., trailing space), suggestions reappear.
 
 ---
 
@@ -126,7 +126,7 @@ The Orientation route should render as a clean chat surface:
 - SeCuida messages stay on the left, with the chat icon next to the `SeCuida` sender label;
 - user-selected messages stay on the right;
 - option bubbles float on the right above the composer;
-- clicking an option bubble fills the input only;
+- clicking an option bubble immediately sends the answer and advances the flow;
 - the fixed composer sits above the mobile bottom navigation;
 - the send button uses the `Send` icon and is disabled unless the input exactly matches an available option;
 - the suggestion list hides when the input strictly matches an option label and reappears when it no longer does;
@@ -176,7 +176,7 @@ Until Privacy/LGPD verification, treat this as in-memory session state only.
 * A new flow can be added without editing React components.
 * Flow switching works through `entering_phrases`.
 * Current node options and flow entry options appear together in autocomplete.
-* Suggestion bubbles autocomplete the composer but do not submit until the user presses send.
+* Clicking a suggestion bubble immediately sends the answer and advances the flow.
 * The composer send action is disabled unless the input exactly matches an available option/action.
 * The suggestion list hides when the input strictly matches an option label and reappears when it no longer does.
 * The engine has no React dependency.

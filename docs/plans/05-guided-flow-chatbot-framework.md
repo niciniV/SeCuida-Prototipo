@@ -248,7 +248,7 @@ Expected: FAIL because the current screen is the hardcoded prototype.
 
 - [ ] **Step 3: Replace prototype with constrained guided chat**
 
-Render a polished, mobile-first Orientation screen from `flowRegistry.flows`, using transcript bubbles, floating option chips, and a fixed chat composer. Clicking a suggestion should only fill the composer; the user submits by pressing the `Send` icon button. Disable send unless the input exactly matches an available option/action. Hide the suggestion list when the input strictly matches an option label and show it again when the input changes. Keep current node answers visually dominant, surface global actions through matching autocomplete, avoid extra explanatory panels, do not persist state, and do not imply AI understanding.
+Render a polished, mobile-first Orientation screen from `flowRegistry.flows`, using transcript bubbles, floating option chips, and a fixed chat composer. Clicking a suggestion immediately sends the answer and advances the flow. Disable send unless the input exactly matches an available option/action. Hide the suggestion list when the input strictly matches an option label and show it again when the input changes. Keep current node answers visually dominant, surface global actions through matching autocomplete, avoid extra explanatory panels, do not persist state, and do not imply AI understanding.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -283,7 +283,7 @@ Expected: Vite serves the app at `http://localhost:3000`.
 
 - [ ] **Step 3: Verify in browser**
 
-Open `http://localhost:3000/orientacao`, inspect desktop and mobile-ish viewports, click one suggestion and confirm it fills the input without submitting, press send and confirm the transcript advances, type a partial global action and confirm it appears through autocomplete, and use one global action. Check that the UI is beautiful, calm, readable, responsive, has only one practical scroll surface, and cannot submit arbitrary free text.
+Open `http://localhost:3000/orientacao`, inspect desktop and mobile-ish viewports, click one suggestion and confirm it immediately sends and advances the transcript, type a partial global action and confirm it appears through autocomplete, and use one global action. Check that the UI is beautiful, calm, readable, responsive, has only one practical scroll surface, and cannot submit arbitrary free text.
 
 - [ ] **Step 4: Refactor only if verification surfaces issues**
 
