@@ -24,6 +24,10 @@ Add a "..." typing indicator with bouncing-dot animation to the Orientação cha
 
 The flow engine's `advanceFlow()` is a pure synchronous function that produces **both** user and bot messages in one call. We cannot add the user message separately without duplicating it or modifying the engine. Instead, the engine runs immediately (preserving its contract), and the component controls which messages are **visible** to the user.
 
+### Core invariant
+
+**While `visibleCount < state.transcript.length`, the user must not be able to interact with the next options.** The typing indicator represents a pending bot response; revealing options before the bot message explaining them would break the conversational flow.
+
 ### Current flow
 
 ```
@@ -35,19 +39,21 @@ User selects option → submitOption() → advanceFlow() → all messages appear
 ```
 User selects option
   → advanceFlow() called immediately (adds user + bot messages to state)
-  → visibleCount set to transcript length BEFORE advance (shows user message only)
-  → typing indicator shown at bottom
+  → visibleCount set to show user message only
+  → typing indicator shown, suggestions/input gated
   → setTimeout(TYPING_DELAY_MS)
-  → visibleCount updated to full transcript length (bot messages revealed)
+  → visibleCount updated to full transcript length
+  → bot messages revealed, suggestions/input ungated
+  → pendingNavigation (if any) fires now
 ```
 
 ### Initial load
 
 ```
 Component mounts
-  → transcript empty, typing indicator shown
+  → state = null (no transcript), typing indicator shown, suggestions/input gated
   → setTimeout(TYPING_DELAY_MS)
-  → createInitialFlowStateFromRegistry() called → all messages appear
+  → createInitialFlowStateFromRegistry() called, state set → messages appear
 ```
 
 ## Component Changes (OrientationScreen.tsx)
@@ -61,15 +67,28 @@ const TYPING_DELAY_MS = 1200
 ### New state
 
 ```ts
+const [state, setState] = useState<FlowRuntimeState | null>(null)
 const [visibleCount, setVisibleCount] = useState(0)
 const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 ```
 
-`visibleCount` tracks how many messages from `state.transcript` are currently visible. When it's less than `state.transcript.length`, the extra messages are bot messages waiting to be revealed (typing indicator shows instead).
+`state` starts as `null` until the initial typing delay completes. `visibleCount` tracks how many messages from `state.transcript` are currently visible.
+
+### Derived blocking flag
+
+```ts
+const isRevealing = state === null || visibleCount < state.transcript.length
+```
+
+When `isRevealing` is true:
+- Typing indicator is shown
+- Suggestions are hidden
+- Input and send button are disabled
+- `pendingNavigation` does not fire
 
 ### TypingIndicator component
 
-A visual indicator rendered at the bottom of the transcript when `visibleCount < state.transcript.length`:
+A visual indicator rendered at the bottom of the transcript when `isRevealing` is true:
 
 - Same bot avatar as regular bot messages (MessageCircle icon in primary-colored circle)
 - Same green (`#EEF8F3`) bubble background and rounded shape
@@ -85,11 +104,53 @@ A visual indicator rendered at the bottom of the transcript when `visibleCount <
 ))}
 
 // After:
-{state.transcript.slice(0, visibleCount).map((message) => (
+{state?.transcript.slice(0, visibleCount).map((message) => (
   <MessageBubble key={message.id} message={message} />
 ))}
-{visibleCount < state.transcript.length && <TypingIndicator />}
+{isRevealing && <TypingIndicator />}
 ```
+
+### Options gating
+
+```ts
+// Before:
+const options = useMemo(() => resolveOptions(state, flows), [state]);
+
+// After:
+const options = useMemo(() => (state && !isRevealing ? resolveOptions(state, flows) : []), [state, isRevealing]);
+```
+
+When `isRevealing` is true, `options` is empty — no suggestions render, `exactOption` is undefined, and the send button is disabled via `disabled={!exactOption}`.
+
+### Input disabling
+
+```ts
+// Add disabled prop to input:
+<input
+  ...
+  disabled={isRevealing}
+/>
+```
+
+### pendingNavigation gating
+
+```ts
+// Before:
+useEffect(() => {
+  if (state.pendingNavigation) {
+    navigate(state.pendingNavigation);
+  }
+}, [navigate, state.pendingNavigation]);
+
+// After:
+useEffect(() => {
+  if (state && !isRevealing && state.pendingNavigation) {
+    navigate(state.pendingNavigation);
+  }
+}, [navigate, state, isRevealing]);
+```
+
+Navigation only fires after all messages are revealed.
 
 ### Initial load useEffect
 
@@ -107,56 +168,58 @@ useEffect(() => {
 }, [])
 ```
 
+State starts as `null`. Options resolve to `[]` (gated by `isRevealing`). Typing indicator shows. After the delay, state is set and all messages appear at once.
+
 ### submitOption changes
 
-```ts
-const submitOption = (option: RuntimeOption) => {
-  // 1. Clear any pending timer
-  if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
-
-  // 2. Run engine immediately — adds user + bot messages to state
-  const preAdvanceCount = state.transcript.length
-  setState(current => advanceFlow(current, flows, option.label))
-
-  // 3. Show user message immediately, bot messages hidden behind typing indicator
-  setVisibleCount(preAdvanceCount + 1) // +1 for the user message advanceFlow just added
-
-  // 4. After delay, reveal bot messages
-  typingTimerRef.current = setTimeout(() => {
-    setVisibleCount(prev => {
-      // Use functional update to get the latest transcript length
-      // visibleCount should match the full transcript after advanceFlow
-      return prev // will be synced via a separate effect below
-    })
-  }, TYPING_DELAY_MS)
-}
-```
-
-**Simpler alternative for step 4** — since `state` already has the full transcript after `advanceFlow`, we can capture it in a closure:
+Different option kinds produce different state transitions. The `visibleCount` must be computed accordingly.
 
 ```ts
-const submitOption = (option: RuntimeOption) => {
+function submitOption(option: RuntimeOption) {
+  if (option.kind === 'global_action' && option.target !== 'end') {
+    navigate(option.target);
+    return;
+  }
+
   if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+
+  setInputValue('')
 
   setState(current => {
+    if (!current) return current
+
+    const preAdvanceCount = current.transcript.length
     const newState = advanceFlow(current, flows, option.label)
+
+    // Determine how many messages to show immediately
+    let immediateCount: number
+    if (option.kind === 'entry_phrase' || option.kind === 'resume_flow') {
+      // These replace the transcript entirely — show nothing until reveal
+      // (the new flow's greeting is a bot batch, same as initial load)
+      immediateCount = 0
+    } else {
+      // node_option: user message was appended, show it
+      immediateCount = preAdvanceCount + 1
+    }
+
+    setVisibleCount(immediateCount)
+
+    // Schedule reveal
     const totalMessages = newState.transcript.length
-
-    // Show user message now, bot messages after delay
-    setVisibleCount(current.transcript.length + 1)
-
-    typingTimerRef.current = setTimeout(() => {
-      setVisibleCount(totalMessages)
-    }, TYPING_DELAY_MS)
+    if (immediateCount < totalMessages) {
+      typingTimerRef.current = setTimeout(() => {
+        setVisibleCount(totalMessages)
+      }, TYPING_DELAY_MS)
+    }
 
     return newState
   })
 }
 ```
 
-This captures `totalMessages` in the closure from the state update, ensuring `visibleCount` reaches the correct value.
-
 ### Unmount cleanup useEffect
+
+Single cleanup effect — no duplication with the initial-load effect:
 
 ```ts
 useEffect(() => {
@@ -172,9 +235,18 @@ Add `visibleCount` to the dependency array so the view scrolls down to show the 
 
 ```ts
 useEffect(() => {
-  const log = transcriptRef.current
+  const log = logRef.current
   if (log) log.scrollTop = log.scrollHeight
-}, [state.transcript, visibleOptions.length, visibleCount])
+}, [state?.transcript, visibleOptions.length, visibleCount])
+```
+
+### Loading state for options resolve
+
+Since `state` is now `null` on initial load, `resolveOptions` must handle this:
+
+```ts
+// options useMemo already gates on state being non-null via the isRevealing check
+const options = useMemo(() => (state && !isRevealing ? resolveOptions(state, flows) : []), [state, isRevealing]);
 ```
 
 ## Animation CSS
@@ -196,10 +268,6 @@ useEffect(() => {
 ```
 
 Each dot gets a staggered `animation-delay`: `0s`, `0.15s`, `0.3s`.
-
-## Cleanup
-
-Both timeout paths (initial load and user selection) use a shared `typingTimerRef`. The initial load's useEffect return and a dedicated unmount useEffect both clear the ref to prevent state updates on unmounted components.
 
 ## Files Modified
 
