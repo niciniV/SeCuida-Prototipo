@@ -184,10 +184,10 @@ describe('OrientationScreen', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [ ] **Step 2: Run tests to verify the updated baseline**
 
-Run: `npx vitest run src/features/orientation/__tests__/OrientationScreen.test.tsx`
-Expected: Tests fail because the component doesn't have fake timer support yet (options don't appear after advanceInitialLoad).
+Run: `pnpm run test -- src/features/orientation/__tests__/OrientationScreen.test.tsx`
+Expected: Existing behavior may still pass because the component currently renders synchronously. The red tests for the new typing behavior are added in Task 4.
 
 - [ ] **Step 3: Commit**
 
@@ -198,10 +198,12 @@ git commit -m "test: update orientation tests for async initial load with fake t
 
 ---
 
-### Task 2: Add TypingIndicator component and staged rendering for initial load
+### Task 2: Add TypingIndicator component and staged rendering state
 
 **Files:**
 - Modify: `src/features/orientation/OrientationScreen.tsx`
+
+This task introduces nullable state and reveal tracking. Continue directly into Task 3 before running tests or committing, because `submitOption`, `pendingNavigation`, and auto-scroll must also become null-safe in the same implementation slice.
 
 - [ ] **Step 1: Add TypingIndicator component**
 
@@ -261,9 +263,9 @@ export function OrientationScreen() {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 ```
 
-- [ ] **Step 3: Add derived isRevealing flag**
+- [ ] **Step 3: Add derived isRevealing flag before resolving options**
 
-After the `exactOption` memo (line 33):
+Add this after the state/ref declarations and before the `options` memo. `options` uses `isRevealing`, so it must be declared first.
 
 ```tsx
 const isRevealing = state === null || visibleCount < state.transcript.length;
@@ -276,6 +278,8 @@ Replace the options memo (lines 17-31):
 ```tsx
 const options = useMemo(() => (state && !isRevealing ? resolveOptions(state, flows) : []), [state, isRevealing]);
 ```
+
+Keep `visibleOptions` and `exactOption` after this memo so they derive from the gated `options` array.
 
 - [ ] **Step 5: Update transcript rendering**
 
@@ -322,17 +326,13 @@ Update the import from flow-engine types (line 8):
 import type { ChatMessage, FlowRuntimeState, RuntimeOption } from '../../domain/flow-engine/types';
 ```
 
-- [ ] **Step 9: Run tests to verify they pass**
+- [ ] **Step 9: Continue to Task 3 before verifying**
 
-Run: `npx vitest run src/features/orientation/__tests__/OrientationScreen.test.tsx`
-Expected: All existing tests pass with the fake timer setup.
+Do not run tests or commit yet. The component is not complete until Task 3 updates `submitOption`, the navigation effect, auto-scroll, and input disabling for nullable/revealing state.
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 10: Do not commit yet**
 
-```bash
-git add src/features/orientation/OrientationScreen.tsx
-git commit -m "feat: add TypingIndicator and staged rendering for initial load"
-```
+Commit after Task 3, when the component is runnable and type-safe.
 
 ---
 
@@ -426,14 +426,14 @@ useEffect(() => {
 
 - [ ] **Step 5: Run all tests**
 
-Run: `npx vitest run src/features/orientation/__tests__/OrientationScreen.test.tsx`
+Run: `pnpm run test -- src/features/orientation/__tests__/OrientationScreen.test.tsx`
 Expected: All tests pass.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add src/features/orientation/OrientationScreen.tsx
-git commit -m "feat: stage bot message reveal with typing delay on user selections"
+git commit -m "feat: stage orientation bot messages with typing indicator"
 ```
 
 ---
@@ -487,7 +487,7 @@ it('shows user message immediately and bot response after delay when selecting a
   expect(
     screen.getByText('Quando tudo parece urgente, ajuda separar o que precisa de atenção agora do que pode esperar.'),
   ).toBeInTheDocument();
-  expect(screen.getByRole('option', { name: 'Dificuldade para descansar' })).toBeInTheDocument();
+  expect(screen.getByRole('option', { name: 'Quero pensar em uma pausa curta' })).toBeInTheDocument();
 });
 ```
 
@@ -516,7 +516,7 @@ it('disables input and send while revealing bot messages', () => {
 
 - [ ] **Step 4: Run all tests**
 
-Run: `npx vitest run src/features/orientation/__tests__/OrientationScreen.test.tsx`
+Run: `pnpm run test -- src/features/orientation/__tests__/OrientationScreen.test.tsx`
 Expected: All tests pass including new ones.
 
 - [ ] **Step 5: Commit**
@@ -535,22 +535,22 @@ git commit -m "test: add typing indicator behavior coverage"
 
 - [ ] **Step 1: Run full test suite**
 
-Run: `npx vitest run`
+Run: `pnpm run test`
 Expected: All tests pass.
 
 - [ ] **Step 2: Run TypeScript check**
 
-Run: `npx tsc --noEmit`
+Run: `pnpm run lint`
 Expected: No type errors.
 
-- [ ] **Step 3: Run linter**
+- [ ] **Step 3: Run production build**
 
-Run: `npx eslint src/features/orientation/OrientationScreen.tsx src/features/orientation/__tests__/OrientationScreen.test.tsx`
-Expected: No lint errors.
+Run: `pnpm run build`
+Expected: Build succeeds.
 
 - [ ] **Step 4: Commit any fixes if needed**
 
 ```bash
 git add -A
-git commit -m "fix: address lint/type issues in typing indicator implementation"
+git commit -m "fix: address verification issues in typing indicator implementation"
 ```

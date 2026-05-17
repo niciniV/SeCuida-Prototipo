@@ -174,6 +174,8 @@ Different option kinds produce different state transitions. The `visibleCount` m
 
 ```ts
 function submitOption(option: RuntimeOption) {
+  if (!state) return
+
   if (option.kind === 'global_action' && option.target !== 'end') {
     navigate(option.target);
     return;
@@ -183,10 +185,10 @@ function submitOption(option: RuntimeOption) {
   setInputValue('')
 
   // Capture pre-advance count from current render state
-  const preAdvanceCount = state?.transcript.length ?? 0
+  const preAdvanceCount = state.transcript.length
 
   // Run the engine — pure synchronous call
-  const newState = advanceFlow(state!, flows, option.label)
+  const newState = advanceFlow(state, flows, option.label)
 
   // Determine how many messages to show immediately
   let immediateCount: number
@@ -256,24 +258,24 @@ const options = useMemo(() => (state && !isRevealing ? resolveOptions(state, flo
 
 ## Animation
 
-Uses inline `<style>` within the `TypingIndicator` component to avoid modifying global CSS files. The keyframes and dot styles are scoped to the component.
+Uses inline `<style>` within the `TypingIndicator` component to avoid modifying global CSS files. The class/keyframe names are prefixed for this component to avoid collisions with global styles.
 
 ```tsx
 function TypingIndicator() {
   return (
     <article className="flex items-end gap-2 justify-start" aria-hidden="true">
       <style>{`
-        @keyframes typing-bounce {
+        @keyframes orientation-typing-bounce {
           0%, 60%, 100% { transform: translateY(0); }
           30% { transform: translateY(-6px); }
         }
-        .typing-dot {
+        .orientation-typing-dot {
           width: 8px;
           height: 8px;
           background: #6b7280;
           border-radius: 50%;
           display: inline-block;
-          animation: typing-bounce 1.2s infinite ease-in-out;
+          animation: orientation-typing-bounce 1.2s infinite ease-in-out;
         }
       `}</style>
       <div className="flex max-w-[84%] flex-col gap-1 items-start">
@@ -284,9 +286,9 @@ function TypingIndicator() {
           SeCuida
         </span>
         <div className="ml-10 rounded-2xl rounded-bl-sm border border-outline-variant/40 bg-[#EEF8F3] px-4 py-3 shadow-sm">
-          <span className="typing-dot" style={{ animationDelay: '0s' }} />
-          <span className="typing-dot" style={{ animationDelay: '0.15s', marginLeft: 4 }} />
-          <span className="typing-dot" style={{ animationDelay: '0.3s', marginLeft: 4 }} />
+          <span className="orientation-typing-dot" style={{ animationDelay: '0s' }} />
+          <span className="orientation-typing-dot" style={{ animationDelay: '0.15s', marginLeft: 4 }} />
+          <span className="orientation-typing-dot" style={{ animationDelay: '0.3s', marginLeft: 4 }} />
         </div>
       </div>
     </article>
@@ -294,9 +296,21 @@ function TypingIndicator() {
 }
 ```
 
+## Test Updates
+
+Existing orientation screen tests assume the initial transcript and options render synchronously. Update them to use fake timers or async waits around `TYPING_DELAY_MS`.
+
+Recommended coverage:
+- Initial load shows the typing indicator first, hides suggestions, disables input/send, then reveals the greeting and options after the timer.
+- Selecting a normal node option shows the user message immediately, hides next options during the delay, then reveals the bot response and options.
+- `entry_phrase` transitions hide the replaced transcript until the new flow greeting is revealed.
+- `resume_flow` restores the suspended transcript immediately without a typing delay.
+- A safety-interrupt/pending-navigation option waits until the bot message is revealed before navigating.
+
 ## Files Modified
 
 - `src/features/orientation/OrientationScreen.tsx` — all component logic and inline animation styles
+- `src/features/orientation/__tests__/OrientationScreen.test.tsx` — update timing-sensitive tests and add typing-state coverage
 
 ## Scope
 
@@ -304,4 +318,3 @@ function TypingIndicator() {
 - No changes to flow content (`src/content/flows/`)
 - No changes to global CSS (`src/index.css`)
 - No new dependencies (inline CSS animation only, `motion/react` not needed for this)
-- No changes to tests in this spec (test updates handled during implementation)

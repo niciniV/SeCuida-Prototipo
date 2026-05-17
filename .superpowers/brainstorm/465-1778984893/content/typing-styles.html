@@ -1,0 +1,104 @@
+<h2>Typing Indicator Animation</h2>
+<p class="subtitle">Which dot animation feels right for the SeCuida chatbot?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Bouncing Dots</h3>
+      <p>Classic typing indicator — dots bounce up one after another in a loop.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Fading Dots</h3>
+      <p>Dots fade in and out in sequence — softer, more subtle feel.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Pulsing Ellipsis</h3>
+      <p>The whole "..." pulses gently as a single unit — minimal and clean.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem;">
+  <h3>Live Previews</h3>
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1rem;">
+
+    <!-- Option A: Bouncing -->
+    <div style="flex: 1; min-width: 200px;">
+      <p class="label">A — Bouncing</p>
+      <div style="background: #EEF8F3; border-radius: 16px 16px 16px 4px; padding: 14px 18px; display: inline-flex; gap: 5px; align-items: center;">
+        <span class="dot-bounce" style="animation-delay: 0s;"></span>
+        <span class="dot-bounce" style="animation-delay: 0.15s;"></span>
+        <span class="dot-bounce" style="animation-delay: 0.3s;"></span>
+      </div>
+    </div>
+
+    <!-- Option B: Fading -->
+    <div style="flex: 1; min-width: 200px;">
+      <p class="label">B — Fading</p>
+      <div style="background: #EEF8F3; border-radius: 16px 16px 16px 4px; padding: 14px 18px; display: inline-flex; gap: 5px; align-items: center;">
+        <span class="dot-fade" style="animation-delay: 0s;"></span>
+        <span class="dot-fade" style="animation-delay: 0.2s;"></span>
+        <span class="dot-fade" style="animation-delay: 0.4s;"></span>
+      </div>
+    </div>
+
+    <!-- Option C: Pulsing -->
+    <div style="flex: 1; min-width: 200px;">
+      <p class="label">C — Pulsing</p>
+      <div style="background: #EEF8F3; border-radius: 16px 16px 16px 4px; padding: 14px 18px; display: inline-flex; gap: 2px; align-items: center;">
+        <span class="dot-pulse">.</span><span class="dot-pulse" style="animation-delay: 0.1s;">.</span><span class="dot-pulse" style="animation-delay: 0.2s;">.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .dot-bounce {
+    width: 8px;
+    height: 8px;
+    background: #6b7280;
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.2s infinite ease-in-out;
+  }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  .dot-fade {
+    width: 8px;
+    height: 8px;
+    background: #6b7280;
+    border-radius: 50%;
+    display: inline-block;
+    animation: fade 1.2s infinite ease-in-out;
+  }
+
+  @keyframes fade {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .dot-pulse {
+    font-size: 24px;
+    font-weight: bold;
+    color: #6b7280;
+    line-height: 1;
+    animation: pulse 1.2s infinite ease-in-out;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+</style>
