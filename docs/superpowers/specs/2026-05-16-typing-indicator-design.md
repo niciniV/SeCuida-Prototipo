@@ -92,7 +92,7 @@ A visual indicator rendered at the bottom of the transcript when `isRevealing` i
 
 - Same bot avatar as regular bot messages (MessageCircle icon in primary-colored circle)
 - Same green (`#EEF8F3`) bubble background and rounded shape
-- Three dots with bouncing animation inside the bubble
+- Three dots with bouncing animation inside the bubble, using inline `<style>` for the keyframes
 - `aria-hidden="true"` on the animated dots (decorative — actual messages announced via existing `aria-live="polite"`)
 
 ### Transcript rendering change
@@ -161,18 +161,16 @@ useEffect(() => {
     setState(initialState)
     setVisibleCount(initialState.transcript.length)
   }, TYPING_DELAY_MS)
-
-  return () => {
-    if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
-  }
 }, [])
 ```
+
+No cleanup return — the unmount effect handles clearing `typingTimerRef`.
 
 State starts as `null`. Options resolve to `[]` (gated by `isRevealing`). Typing indicator shows. After the delay, state is set and all messages appear at once.
 
 ### submitOption changes
 
-Different option kinds produce different state transitions. The `visibleCount` must be computed accordingly.
+Different option kinds produce different state transitions. The `visibleCount` must be computed accordingly. **No side effects inside the `setState` updater** — React StrictMode may invoke it more than once.
 
 ```ts
 function submitOption(option: RuntimeOption) {
@@ -182,44 +180,51 @@ function submitOption(option: RuntimeOption) {
   }
 
   if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
-
   setInputValue('')
 
-  setState(current => {
-    if (!current) return current
+  // Capture pre-advance count from current render state
+  const preAdvanceCount = state?.transcript.length ?? 0
 
-    const preAdvanceCount = current.transcript.length
-    const newState = advanceFlow(current, flows, option.label)
+  // Run the engine — pure synchronous call
+  const newState = advanceFlow(state!, flows, option.label)
 
-    // Determine how many messages to show immediately
-    let immediateCount: number
-    if (option.kind === 'entry_phrase' || option.kind === 'resume_flow') {
-      // These replace the transcript entirely — show nothing until reveal
-      // (the new flow's greeting is a bot batch, same as initial load)
-      immediateCount = 0
-    } else {
-      // node_option: user message was appended, show it
-      immediateCount = preAdvanceCount + 1
-    }
+  // Determine how many messages to show immediately
+  let immediateCount: number
+  if (option.kind === 'entry_phrase') {
+    // New flow replaces transcript — show nothing until reveal (same as initial load)
+    immediateCount = 0
+  } else if (option.kind === 'resume_flow') {
+    // Suspended transcript is restored — show all old messages immediately
+    // The suspended transcript was already visible before suspension
+    immediateCount = newState.transcript.length
+  } else {
+    // node_option: user message was appended, show it
+    immediateCount = preAdvanceCount + 1
+  }
 
-    setVisibleCount(immediateCount)
+  // Update state
+  setState(newState)
+  setVisibleCount(immediateCount)
 
-    // Schedule reveal
-    const totalMessages = newState.transcript.length
-    if (immediateCount < totalMessages) {
-      typingTimerRef.current = setTimeout(() => {
-        setVisibleCount(totalMessages)
-      }, TYPING_DELAY_MS)
-    }
-
-    return newState
-  })
+  // Schedule reveal if there are hidden messages
+  const totalMessages = newState.transcript.length
+  if (immediateCount < totalMessages) {
+    typingTimerRef.current = setTimeout(() => {
+      setVisibleCount(totalMessages)
+    }, TYPING_DELAY_MS)
+  }
 }
 ```
 
+Key difference from previous version: `advanceFlow`, `setVisibleCount`, and `setTimeout` all run outside the `setState` updater. The updater is a pure state assignment. This avoids duplicate timers under React StrictMode.
+
+For `resume_flow`: the suspended transcript was already visible before the user switched flows, so all restored messages show immediately — no typing delay.
+
+For `entry_phrase`: the transcript is replaced with a new flow's greeting, which is a bot batch — same UX as initial load (typing indicator, then reveal).
+
 ### Unmount cleanup useEffect
 
-Single cleanup effect — no duplication with the initial-load effect:
+Single cleanup effect — the initial-load effect does NOT return its own cleanup:
 
 ```ts
 useEffect(() => {
@@ -249,33 +254,54 @@ Since `state` is now `null` on initial load, `resolveOptions` must handle this:
 const options = useMemo(() => (state && !isRevealing ? resolveOptions(state, flows) : []), [state, isRevealing]);
 ```
 
-## Animation CSS
+## Animation
 
-```css
-@keyframes typing-bounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-6px); }
-}
+Uses inline `<style>` within the `TypingIndicator` component to avoid modifying global CSS files. The keyframes and dot styles are scoped to the component.
 
-.typing-dot {
-  width: 8px;
-  height: 8px;
-  background: #6b7280;
-  border-radius: 50%;
-  display: inline-block;
-  animation: typing-bounce 1.2s infinite ease-in-out;
+```tsx
+function TypingIndicator() {
+  return (
+    <article className="flex items-end gap-2 justify-start" aria-hidden="true">
+      <style>{`
+        @keyframes typing-bounce {
+          0%, 60%, 100% { transform: translateY(0); }
+          30% { transform: translateY(-6px); }
+        }
+        .typing-dot {
+          width: 8px;
+          height: 8px;
+          background: #6b7280;
+          border-radius: 50%;
+          display: inline-block;
+          animation: typing-bounce 1.2s infinite ease-in-out;
+        }
+      `}</style>
+      <div className="flex max-w-[84%] flex-col gap-1 items-start">
+        <span className="flex items-center gap-2 font-label-md text-on-surface-variant">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary">
+            <MessageCircle size={17} />
+          </span>
+          SeCuida
+        </span>
+        <div className="ml-10 rounded-2xl rounded-bl-sm border border-outline-variant/40 bg-[#EEF8F3] px-4 py-3 shadow-sm">
+          <span className="typing-dot" style={{ animationDelay: '0s' }} />
+          <span className="typing-dot" style={{ animationDelay: '0.15s', marginLeft: 4 }} />
+          <span className="typing-dot" style={{ animationDelay: '0.3s', marginLeft: 4 }} />
+        </div>
+      </div>
+    </article>
+  )
 }
 ```
 
-Each dot gets a staggered `animation-delay`: `0s`, `0.15s`, `0.3s`.
-
 ## Files Modified
 
-- `src/features/orientation/OrientationScreen.tsx` — all changes are in this single file
+- `src/features/orientation/OrientationScreen.tsx` — all component logic and inline animation styles
 
 ## Scope
 
 - No changes to the flow engine (`src/domain/flow-engine/`)
 - No changes to flow content (`src/content/flows/`)
-- No new dependencies (CSS animation only, `motion/react` not needed for this)
+- No changes to global CSS (`src/index.css`)
+- No new dependencies (inline CSS animation only, `motion/react` not needed for this)
 - No changes to tests in this spec (test updates handled during implementation)
