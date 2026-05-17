@@ -150,4 +150,63 @@ describe('OrientationScreen', () => {
     expect(screen.getByRole('listbox', { name: 'Sugestões de resposta' })).toBeInTheDocument();
     expect(sendButton).toBeEnabled();
   });
+
+  it('shows typing indicator before initial greeting appears', () => {
+    renderOrientation();
+
+    // Typing indicator visible, no messages yet
+    expect(screen.queryByText(/Vamos olhar para essa sobrecarga com calma/)).not.toBeInTheDocument();
+    expect(screen.getByText('SeCuida')).toBeInTheDocument(); // avatar in typing indicator
+
+    // After delay, messages appear
+    advanceInitialLoad();
+
+    expect(screen.getByText(/Vamos olhar para essa sobrecarga com calma/)).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Muitas tarefas ao mesmo tempo' })).toBeInTheDocument();
+  });
+
+  it('shows user message immediately and bot response after delay when selecting a node option', () => {
+    renderOrientation();
+    advanceInitialLoad();
+
+    fireEvent.click(screen.getByRole('option', { name: 'Muitas tarefas ao mesmo tempo' }));
+
+    // User message visible immediately
+    expect(screen.getByText('Muitas tarefas ao mesmo tempo')).toBeInTheDocument();
+
+    // Bot response not yet visible, typing indicator shown
+    expect(
+      screen.queryByText('Quando tudo parece urgente, ajuda separar o que precisa de atenção agora do que pode esperar.'),
+    ).not.toBeInTheDocument();
+
+    // Options hidden during reveal
+    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+
+    // After delay, bot response and new options appear
+    advanceInitialLoad();
+
+    expect(
+      screen.getByText('Quando tudo parece urgente, ajuda separar o que precisa de atenção agora do que pode esperar.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Quero pensar em uma pausa curta' })).toBeInTheDocument();
+  });
+
+  it('disables input and send while revealing bot messages', () => {
+    renderOrientation();
+    advanceInitialLoad();
+
+    fireEvent.click(screen.getByRole('option', { name: 'Muitas tarefas ao mesmo tempo' }));
+
+    const input = screen.getByPlaceholderText('Digite ou escolha uma opção');
+    const sendButton = screen.getByRole('button', { name: 'Enviar opção selecionada' });
+
+    expect(input).toBeDisabled();
+    expect(sendButton).toBeDisabled();
+
+    advanceInitialLoad();
+
+    expect(input).not.toBeDisabled();
+    // send is disabled because no exact match typed, but input is enabled
+    expect(sendButton).toBeDisabled();
+  });
 });
