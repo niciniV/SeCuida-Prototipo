@@ -11,12 +11,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'SeCuida',
         short_name: 'SeCuida',
-        description: 'Orientacao emocional, recursos e apoio para educadores.',
+        description: 'Orientação emocional, recursos e apoio para educadores.',
         display: 'standalone',
+        lang: 'pt-BR',
         start_url: '/SeCuida-Prototipo/',
         scope: '/SeCuida-Prototipo/',
         theme_color: '#006a43',
