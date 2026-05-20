@@ -1,0 +1,6 @@
+dist
+coverage
+node_modules
+.pnpm-store
+vite-dev*.log
+vite-dev*.err.log

@@ -33,7 +33,7 @@ export function getActiveFlow(state: FlowRuntimeState, flows: GuidedFlow[]) {
   return getFlowById(flows, state.activeFlowId);
 }
 
-export function createInitialFlowState(flow: GuidedFlow, flows: GuidedFlow[]): FlowRuntimeState {
+export function createInitialFlowState(flow: GuidedFlow, _flows: GuidedFlow[]): FlowRuntimeState {
   const validation = validateFlow(flow);
 
   if (!validation.valid) {
