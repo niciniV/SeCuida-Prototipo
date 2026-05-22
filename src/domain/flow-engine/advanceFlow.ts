@@ -101,17 +101,21 @@ function applyOptionEffects(state: FlowRuntimeState, flowId: string, effects: Fl
       };
     }
 
-    return {
-      ...nextState,
-      activeFlowId: undefined,
-      activeNodeId: undefined,
-      pendingNavigation: effect.destination,
-      safetyFlags: {
-        ...nextState.safetyFlags,
-        ...(effect.blockResume ? { [`block-resume:${flowId}`]: true } : {}),
-      },
-      transcript: [...nextState.transcript, createMessage('bot', effect.message, flowId, nextState.activeNodeId)],
-    };
+    if (effect.kind === 'safety_interrupt') {
+      return {
+        ...nextState,
+        activeFlowId: undefined,
+        activeNodeId: undefined,
+        pendingNavigation: effect.destination,
+        safetyFlags: {
+          ...nextState.safetyFlags,
+          ...(effect.blockResume ? { [`block-resume:${flowId}`]: true } : {}),
+        },
+        transcript: [...nextState.transcript, createMessage('bot', effect.message, flowId, nextState.activeNodeId)],
+      };
+    }
+
+    return nextState;
   }, state);
 }
 

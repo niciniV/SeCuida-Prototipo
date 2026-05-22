@@ -224,6 +224,57 @@ describe('validateFlow', () => {
       errors: ['Flow scoring-flow option bad score effect must include scoreKey and numeric value.'],
     });
   });
+
+  it('accepts optional neutral flow purpose metadata', () => {
+    const neutralFlow: GuidedFlow = {
+      ...validFlow,
+      id: 'neutral-flow',
+      purpose: 'orientation_entry',
+    };
+
+    expect(validateFlow(neutralFlow)).toEqual({ valid: true, errors: [] });
+  });
+
+  it('rejects unknown flow purpose metadata', () => {
+    const invalidFlow = {
+      ...validFlow,
+      purpose: 'diagnostic_router',
+    };
+
+    expect(validateFlow(invalidFlow).errors).toContain(
+      'Flow fixture-flow purpose must be one of orientation_entry, post_flow_routing.',
+    );
+  });
+
+  it('rejects malformed flow_start and navigate effects', () => {
+    const invalidFlow = {
+      ...validFlow,
+      nodes: {
+        ...validFlow.nodes,
+        start: {
+          ...validFlow.nodes.start,
+          options: [
+            {
+              id: 'bad-start',
+              label: 'Começar outro fluxo',
+              next: 'end',
+              effects: [
+                { kind: 'flow_start', flowId: '' },
+                { kind: 'navigate', destination: 'end' },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    expect(validateFlow(invalidFlow).errors).toContain(
+      'Flow fixture-flow option bad-start flow_start effect must include flowId.',
+    );
+    expect(validateFlow(invalidFlow).errors).toContain(
+      'Flow fixture-flow option bad-start navigate effect must include a supported destination.',
+    );
+  });
 });
 
 describe('flow runtime', () => {
