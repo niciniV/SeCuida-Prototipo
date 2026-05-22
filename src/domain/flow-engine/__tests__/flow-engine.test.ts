@@ -534,7 +534,7 @@ describe('flow runtime', () => {
       nodes: {
         ...validFlow.nodes,
         start: {
-          ...validFlow.nodes.start,
+          ...(validFlow.nodes.start as import('../types').ChoiceFlowNode),
           options: [
             {
               id: 'missing-flow',

@@ -96,24 +96,27 @@ describe('Resources content', () => {
 
 describe('Flow registry', () => {
   it('contains switchable guided conversation flows', () => {
-    const flowIds = flowRegistry.flows.map((flow) => flow.id);
+    const flows = flowRegistry.flows as import('../../domain/flow-engine/types').GuidedFlow[];
+    const flowIds = flows.map((flow) => flow.id);
 
-    expect(flowRegistry.flows).toHaveLength(8);
-    expect(flowIds).toEqual(expect.arrayContaining([
-      'orientation-understand-feelings',
-      'orientation-talk-through-experience',
-      'orientation-next-care-step',
-      'orientation-calm-moment',
-      'post-flow-next-step',
-      'work-stress',
-      'rest-recovery',
-      'srq20',
-    ]));
-    flowRegistry.flows.forEach((flow) => {
+    expect(flows).toHaveLength(8);
+    expect(flowIds).toEqual(
+      expect.arrayContaining([
+        'orientation-understand-feelings',
+        'orientation-talk-through-experience',
+        'orientation-next-care-step',
+        'orientation-calm-moment',
+        'post-flow-next-step',
+        'work-stress',
+        'rest-recovery',
+        'srq20',
+      ]),
+    );
+    flows.forEach((flow) => {
       expect(flow.type).toBe('guided_conversation');
       expect(flow.entry.enteringPhrases.length).toBeGreaterThan(0);
     });
-    expect(flowRegistry.flows.filter((flow) => flow.purpose === 'orientation_entry')).toHaveLength(4);
-    expect(flowRegistry.flows.find((flow) => flow.id === 'post-flow-next-step')?.purpose).toBe('post_flow_routing');
+    expect(flows.filter((flow) => flow.purpose === 'orientation_entry')).toHaveLength(4);
+    expect(flows.find((flow) => flow.id === 'post-flow-next-step')?.purpose).toBe('post_flow_routing');
   });
 });
