@@ -94,4 +94,17 @@ describe('DashboardRoute', () => {
     expect(screen.getByText('Escolha como este material será aberto no app.')).toBeInTheDocument();
     expect(screen.getByText('Use palavras curtas para ajudar professores a encontrar o material.')).toBeInTheDocument();
   });
+
+  it('renders export handoff copy', () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Exportar' }));
+
+    expect(screen.getByRole('heading', { name: 'Arquivo para revisão' })).toBeInTheDocument();
+    expect(screen.getByText('Ele não publica nada sozinho.')).toBeInTheDocument();
+  });
 });
