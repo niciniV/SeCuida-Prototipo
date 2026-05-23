@@ -80,4 +80,18 @@ describe('DashboardRoute', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ir para outro fluxo' }));
     expect(screen.getByText('Este é outro fluxo.')).toBeInTheDocument();
   });
+
+  it('renders pt-BR education helper text', async () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
+
+    expect(await screen.findByRole('heading', { name: 'Materiais' })).toBeInTheDocument();
+    expect(screen.getByText('Escolha como este material será aberto no app.')).toBeInTheDocument();
+    expect(screen.getByText('Use palavras curtas para ajudar professores a encontrar o material.')).toBeInTheDocument();
+  });
 });
