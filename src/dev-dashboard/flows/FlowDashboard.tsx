@@ -7,9 +7,17 @@ import { FlowEditor } from './FlowEditor';
 import { FlowMap } from './FlowMap';
 import { FlowPreview } from './FlowPreview';
 
-export function FlowDashboard({ flows, resources }: { flows: GuidedFlow[]; resources: EducationResource[] }) {
-  const [selectedFlowId, setSelectedFlowId] = useState(flows[0]?.id);
-  const selectedFlow = flows.find((flow) => flow.id === selectedFlowId) ?? flows[0];
+export function FlowDashboard({
+  flows,
+  resources,
+  onFlowChange,
+}: {
+  flows: GuidedFlow[];
+  resources: EducationResource[];
+  onFlowChange: (flowIndex: number, flowId: string, patch: Partial<GuidedFlow>) => void;
+}) {
+  const [selectedFlowIndex, setSelectedFlowIndex] = useState(0);
+  const selectedFlow = flows[selectedFlowIndex] ?? flows[0];
   const validation = useMemo(
     () =>
       validateDashboardFlows(
@@ -28,11 +36,11 @@ export function FlowDashboard({ flows, resources }: { flows: GuidedFlow[]; resou
       <aside className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-4">
         <h2 className="font-headline-sm text-on-surface">Fluxos</h2>
         <div className="mt-3 flex flex-col gap-2">
-          {flows.map((flow) => (
+          {flows.map((flow, flowIndex) => (
             <button
-              key={flow.id}
+              key={`${flow.id}-${flowIndex}`}
               type="button"
-              onClick={() => setSelectedFlowId(flow.id)}
+              onClick={() => setSelectedFlowIndex(flowIndex)}
               className={`rounded-lg px-3 py-2 text-left font-label-md ${
                 selectedFlow.id === flow.id ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface'
               }`}
@@ -43,7 +51,7 @@ export function FlowDashboard({ flows, resources }: { flows: GuidedFlow[]; resou
         </div>
       </aside>
       <div className="flex flex-col gap-stack-md">
-        <FlowEditor flow={selectedFlow} />
+        <FlowEditor flow={selectedFlow} onChange={(patch) => onFlowChange(selectedFlowIndex, selectedFlow.id, patch)} />
         <FlowMap flow={selectedFlow} />
         <FlowPreview flow={selectedFlow} flows={flows} />
         <ValidationSummary result={validation} />

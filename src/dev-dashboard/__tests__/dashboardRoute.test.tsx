@@ -107,4 +107,68 @@ describe('DashboardRoute', () => {
     expect(screen.getByRole('heading', { name: 'Arquivo para revisão' })).toBeInTheDocument();
     expect(screen.getByText('Ele não publica nada sozinho.')).toBeInTheDocument();
   });
+
+  it('updates a local flow title draft', () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    const titleInput = screen.getByLabelText('Título do fluxo');
+    fireEvent.change(titleInput, { target: { value: 'Fluxo editado localmente' } });
+
+    expect(screen.getByDisplayValue('Fluxo editado localmente')).toBeInTheDocument();
+  });
+
+  it('updates a local education title draft', () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
+
+    const titleInput = screen.getByLabelText('Título do material');
+    fireEvent.change(titleInput, { target: { value: 'Material editado localmente' } });
+
+    expect(screen.getByDisplayValue('Material editado localmente')).toBeInTheDocument();
+  });
+
+  it('updates required education metadata drafts', () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
+
+    fireEvent.change(screen.getByLabelText('Descrição do material'), {
+      target: { value: 'Descrição editada localmente' },
+    });
+    fireEvent.change(screen.getByLabelText('Fonte do material'), {
+      target: { value: 'Fonte editada localmente' },
+    });
+
+    expect(screen.getByDisplayValue('Descrição editada localmente')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Fonte editada localmente')).toBeInTheDocument();
+  });
+
+  it('updates a link-based education URL draft', () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
+
+    fireEvent.change(screen.getByLabelText('Link público do material'), {
+      target: { value: 'https://example.com/material.pdf' },
+    });
+
+    expect(screen.getByDisplayValue('https://example.com/material.pdf')).toBeInTheDocument();
+  });
 });

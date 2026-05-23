@@ -2,17 +2,18 @@ import type { GuidedFlow } from '../../domain/flow-engine/types';
 import { FieldHint } from '../components/FieldHint';
 import { flowPurposeLabels } from './flowLabels';
 
-export function FlowEditor({ flow }: { flow: GuidedFlow }) {
+export function FlowEditor({ flow, onChange }: { flow: GuidedFlow; onChange: (patch: Partial<GuidedFlow>) => void }) {
   return (
     <section className="flex flex-col gap-stack-sm rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5">
       <h2 className="font-headline-sm text-on-surface">Dados do fluxo</h2>
 
       <label className="flex flex-col gap-2">
-        <span className="font-label-md text-on-surface">Título</span>
+        <span className="font-label-md text-on-surface">Título do fluxo</span>
         <input
+          aria-label="Título do fluxo"
           className="min-h-11 rounded-lg border border-outline-variant bg-surface px-3"
           value={flow.title}
-          readOnly
+          onChange={(event) => onChange({ title: event.target.value })}
         />
       </label>
 
@@ -21,7 +22,11 @@ export function FlowEditor({ flow }: { flow: GuidedFlow }) {
         <select
           className="min-h-11 rounded-lg border border-outline-variant bg-surface px-3"
           value={flow.purpose ?? 'common'}
-          disabled
+          onChange={(event) =>
+            onChange({
+              purpose: event.target.value === 'common' ? undefined : (event.target.value as GuidedFlow['purpose']),
+            })
+          }
         >
           <option value="common">{flowPurposeLabels.common}</option>
           <option value="orientation_entry">{flowPurposeLabels.orientation_entry}</option>
