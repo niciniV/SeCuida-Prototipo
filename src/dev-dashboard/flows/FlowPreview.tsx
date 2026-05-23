@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { GuidedFlow } from '../../domain/flow-engine/types';
 
 interface PreviewMessage {
@@ -21,12 +21,6 @@ export function FlowPreview({ flow, flows }: { flow: GuidedFlow; flows: GuidedFl
 
   const activeFlow = flows.find((item) => item.id === activeFlowId) ?? flow;
   const activeNode = activeFlow.nodes[activeNodeId];
-
-  useEffect(() => {
-    setActiveFlowId(flow.id);
-    setActiveNodeId(flow.entry.nodeId);
-    setMessages(createInitialMessages(flow));
-  }, [flow]);
 
   function chooseOption(option: PreviewOption) {
     const flowStart = option.effects?.find((effect) => effect.kind === 'flow_start');

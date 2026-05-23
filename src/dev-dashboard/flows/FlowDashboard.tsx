@@ -53,7 +53,7 @@ export function FlowDashboard({
       <div className="flex flex-col gap-stack-md">
         <FlowEditor flow={selectedFlow} onChange={(patch) => onFlowChange(selectedFlowIndex, selectedFlow.id, patch)} />
         <FlowMap flow={selectedFlow} />
-        <FlowPreview flow={selectedFlow} flows={flows} />
+        <FlowPreview key={selectedFlow.id} flow={selectedFlow} flows={flows} />
         <ValidationSummary result={validation} />
       </div>
     </section>

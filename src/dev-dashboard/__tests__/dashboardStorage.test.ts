@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { GuidedFlow } from '../../domain/flow-engine/types';
+import type { EducationResource } from '../../domain/resources/types';
 import type { DashboardDraftState } from '../draft-storage/dashboardStorage';
 import {
   DASHBOARD_DRAFT_SCHEMA_VERSION,
@@ -47,8 +49,8 @@ describe('dashboardStorage', () => {
   });
 
   it('merges sparse overrides onto current shipped content', () => {
-    const shippedFlow = { id: 'flow-one', title: 'Shipped flow' } as never;
-    const shippedMaterial = { id: 'material-one', title: 'Shipped material' } as never;
+    const shippedFlow = { id: 'flow-one', title: 'Shipped flow' } as GuidedFlow;
+    const shippedMaterial = { id: 'material-one', title: 'Shipped material' } as EducationResource;
     const draft = {
       ...emptyDraft,
       flowPatches: [{ id: 'flow-one', patch: { title: 'Edited flow' } }],
