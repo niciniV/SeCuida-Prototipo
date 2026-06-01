@@ -21,7 +21,7 @@ export function advanceFlow(state: FlowRuntimeState, flows: GuidedFlow[], select
   }
 
   if (selectedOption.kind === 'resume_flow') {
-    return resumeFlow(state, selectedOption.flowId);
+    return resumeFlow(appendUserMessage(state, selectedOption, state.activeFlowId ?? 'global'), selectedOption.flowId);
   }
 
   if (selectedOption.kind === 'flow_start') {
@@ -39,7 +39,13 @@ export function advanceFlow(state: FlowRuntimeState, flows: GuidedFlow[], select
 
     return {
       ...nextState,
+      transcript: [
+        ...state.transcript,
+        createMessage('user', selectedOption.label, state.activeFlowId ?? 'global', state.activeNodeId),
+        ...nextState.transcript,
+      ],
       suspendedFlows: suspended.suspendedFlows,
+      safetyFlags: state.safetyFlags,
     };
   }
 

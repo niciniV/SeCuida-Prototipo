@@ -387,7 +387,7 @@ describe('flow runtime', () => {
     );
   });
 
-  it('switches flows through another flow entry phrase without merging answers', () => {
+  it('switches flows through another flow entry phrase without merging answers or dropping transcript', () => {
     const answeredState = advanceFlow(
       createInitialFlowState(validFlow, [validFlow, secondFlow]),
       [validFlow, secondFlow],
@@ -400,6 +400,11 @@ describe('flow runtime', () => {
     expect(switchedState.answers).toEqual({});
     expect(switchedState.suspendedFlows['fixture-flow']?.answers).toEqual({ start: 'continue' });
     expect(switchedState.transcript.map((message) => message.text)).toEqual([
+      'Vamos começar com calma.',
+      'O que você quer testar?',
+      'Continuar',
+      'Chegamos ao fim.',
+      'Quero trocar de assunto',
       'Vamos olhar para outro ponto com calma.',
       'Por onde você quer começar?',
     ]);
@@ -440,10 +445,27 @@ describe('flow runtime', () => {
   it('suspends and resumes a flow in memory', () => {
     const state = createInitialFlowState(validFlow, [validFlow]);
     const suspended = suspendFlow(state);
-    const resumed = resumeFlow({ ...suspended, activeFlowId: undefined, activeNodeId: undefined }, 'fixture-flow');
+    const resumed = resumeFlow(
+      {
+        ...suspended,
+        activeFlowId: undefined,
+        activeNodeId: undefined,
+        transcript: [
+          ...suspended.transcript,
+          {
+            id: 'second-flow-extra-message',
+            sender: 'bot',
+            text: 'Outro caminho terminou.',
+            flowId: 'second-flow',
+          },
+        ],
+      },
+      'fixture-flow',
+    );
 
     expect(resumed.activeFlowId).toBe('fixture-flow');
     expect(resumed.activeNodeId).toBe('start');
+    expect(resumed.transcript.map((message) => message.text)).toContain('Outro caminho terminou.');
   });
 
   it('applies generic score effects and resolves score branches without React-specific logic', () => {

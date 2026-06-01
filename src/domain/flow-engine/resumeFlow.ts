@@ -18,7 +18,6 @@ export function resumeFlow(state: FlowRuntimeState, flowId: string): FlowRuntime
     ...state,
     activeFlowId: suspendedFlow.flowId,
     activeNodeId: suspendedFlow.nodeId,
-    transcript: suspendedFlow.transcript,
     answers: suspendedFlow.answers,
     suspendedFlows: remainingSuspendedFlows,
   };
