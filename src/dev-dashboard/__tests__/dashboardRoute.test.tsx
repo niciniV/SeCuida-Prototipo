@@ -160,19 +160,66 @@ describe('DashboardRoute', () => {
       </MemoryRouter>,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir etapa 1' }));
     fireEvent.change(screen.getByLabelText('Texto da etapa 1'), {
       target: { value: 'Texto editado da etapa inicial' },
     });
-    fireEvent.change(screen.getByLabelText('Texto da opção 1'), {
+    fireEvent.change(screen.getByLabelText('Texto da opção 1 da etapa 1'), {
       target: { value: 'Continuar editado' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar etapa final' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Adicionar opção nesta etapa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar opção na etapa 1' }));
 
     expect(screen.getByDisplayValue('Texto editado da etapa inicial')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Continuar editado')).toBeInTheDocument();
     expect(screen.getAllByText('Etapa 3').length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue('Nova opção')).toBeInTheDocument();
+  });
+
+  it('edits later etapas directly and keeps the final-step button after the etapa list', () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir etapa 2' }));
+    fireEvent.change(screen.getByLabelText('Tipo da etapa 2'), {
+      target: { value: 'choice' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar opção na etapa 2' }));
+    fireEvent.change(screen.getByLabelText('Texto da opção 1 da etapa 2'), {
+      target: { value: 'Opção editada na segunda etapa' },
+    });
+
+    expect(screen.getByDisplayValue('Opção editada na segunda etapa')).toBeInTheDocument();
+
+    const finalStepButton = screen.getByRole('button', { name: 'Adicionar etapa final' });
+    const etapaToggles = screen.getAllByRole('button', { name: /^Abrir etapa \d+$/ });
+    const lastEtapaToggle = etapaToggles[etapaToggles.length - 1];
+
+    expect(lastEtapaToggle.compareDocumentPosition(finalStepButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('starts with every etapa collapsed and shows clear collapsed summaries', () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByLabelText('Texto da etapa 1')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Texto da etapa 2')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Abrir etapa 1' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Abrir etapa 2' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('Pergunta com opções')).toBeInTheDocument();
+    expect(screen.getByText('2 opções')).toBeInTheDocument();
+    expect(screen.getByText('Resultado final')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir etapa 2' }));
+
+    expect(screen.getByLabelText('Texto da etapa 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fechar etapa 2' })).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('renders a visual flow map with readable step names and connections', () => {

@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import type { ChoiceFlowNode, FlowNode, GuidedFlow } from '../../domain/flow-engine/types';
 import { FieldHint } from '../components/FieldHint';
 import { getFlowNodeLabel, getFlowNodeTitle } from './flowDisplay';
@@ -14,6 +16,20 @@ export function FlowEditor({
 }) {
   const nodes = Object.values(flow.nodes);
   const firstNodeId = nodes[0]?.id ?? flow.entry.nodeId;
+  const [expandedNodeIds, setExpandedNodeIds] = useState<Record<string, boolean>>({});
+
+  function isNodeExpanded(nodeId: string) {
+    return Boolean(expandedNodeIds[`${flow.id}:${nodeId}`]);
+  }
+
+  function toggleNode(nodeId: string) {
+    const expandedKey = `${flow.id}:${nodeId}`;
+
+    setExpandedNodeIds((current) => ({
+      ...current,
+      [expandedKey]: !current[expandedKey],
+    }));
+  }
 
   function updateEntry(patch: Partial<GuidedFlow['entry']>) {
     onChange({ entry: { ...flow.entry, ...patch } });
@@ -38,6 +54,28 @@ export function FlowEditor({
         [nodeId]: { ...flow.nodes[nodeId], ...patch } as FlowNode,
       },
     });
+  }
+
+  function replaceNode(node: FlowNode) {
+    onChange({
+      nodes: {
+        ...flow.nodes,
+        [node.id]: node,
+      },
+    });
+  }
+
+  function updateNodeKind(node: FlowNode, kind: FlowNode['kind']) {
+    if (node.kind === kind) return;
+
+    if (kind === 'choice') {
+      replaceNode({ id: node.id, kind: 'choice', text: node.text, options: [] });
+      return;
+    }
+
+    if (kind === 'result') {
+      replaceNode({ id: node.id, kind: 'result', text: node.text });
+    }
   }
 
   function updateChoiceOption(
@@ -172,135 +210,231 @@ export function FlowEditor({
       </label>
 
       <section className="flex flex-col gap-stack-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-headline-sm text-on-surface">Etapas</h3>
-          <button
-            type="button"
-            onClick={addResultNode}
-            className="min-h-11 rounded-full bg-secondary-container px-4 font-label-md text-on-secondary-container"
-          >
-            Adicionar etapa final
-          </button>
-        </div>
+        <h3 className="font-headline-sm text-on-surface">Etapas</h3>
 
         <div className="flex flex-col gap-3">
-          {nodes.map((node) => (
-            <article key={node.id} className="flex flex-col gap-3 rounded-lg border border-outline-variant p-3">
-              <h4 className="font-label-lg text-on-surface">{getFlowNodeTitle(node.id, nodes)}</h4>
-              <label className="flex flex-col gap-2">
-                <span className="font-label-sm text-on-surface">Texto da etapa</span>
-                <textarea
-                  aria-label={`Texto da ${getFlowNodeTitle(node.id, nodes).toLowerCase()}`}
-                  className="min-h-20 rounded-lg border border-outline-variant bg-surface px-3 py-2"
-                  value={node.text}
-                  onChange={(event) => updateNode(node.id, { text: event.target.value })}
-                />
-              </label>
+          {nodes.map((node) => {
+            const stepTitle = getFlowNodeTitle(node.id, nodes);
+            const stepLabel = stepTitle.toLowerCase();
+            const isExpanded = isNodeExpanded(node.id);
+            const panelId = `flow-node-${flow.id}-${node.id}`;
 
-              {node.kind === 'choice' && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-label-md text-on-surface">Opções</p>
-                    <button
-                      type="button"
-                      onClick={() => addOption(node)}
-                      className="min-h-10 rounded-full bg-secondary-container px-3 font-label-md text-on-secondary-container"
-                    >
-                      Adicionar opção nesta etapa
-                    </button>
+            return (
+              <article
+                key={node.id}
+                className={`overflow-hidden rounded-lg border border-l-4 bg-surface-container-lowest shadow-sm ${
+                  isExpanded
+                    ? 'border-outline-variant border-l-primary'
+                    : 'border-outline-variant/70 border-l-secondary'
+                }`}
+              >
+                <h4>
+                  <button
+                    type="button"
+                    aria-expanded={isExpanded}
+                    aria-controls={panelId}
+                    aria-label={`${isExpanded ? 'Fechar' : 'Abrir'} ${stepLabel}`}
+                    onClick={() => toggleNode(node.id)}
+                    className="flex w-full items-start justify-between gap-3 p-4 text-left transition-colors hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+                  >
+                    <span className="flex min-w-0 flex-1 flex-col gap-2">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="font-label-lg text-on-surface">{stepTitle}</span>
+                        <span className="rounded-full bg-surface-container-low px-3 py-1 font-label-sm text-on-surface-variant">
+                          {getNodeKindLabel(node)}
+                        </span>
+                        <span className="rounded-full bg-secondary-container px-3 py-1 font-label-sm text-on-secondary-container">
+                          {getNodeCountLabel(node)}
+                        </span>
+                      </span>
+                      <span className="line-clamp-2 font-body-md text-on-surface-variant">
+                        {getNodePreview(node.text)}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`mt-1 h-5 w-5 shrink-0 text-on-surface-variant transition-transform ${
+                        isExpanded ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                </h4>
+
+                {isExpanded && (
+                  <div id={panelId} className="flex flex-col gap-3 border-t border-outline-variant/60 p-3">
+                    <label className="flex flex-col gap-2">
+                      <span className="font-label-sm text-on-surface">Tipo da etapa</span>
+                      <select
+                        aria-label={`Tipo da ${stepLabel}`}
+                        className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
+                        value={node.kind}
+                        onChange={(event) => updateNodeKind(node, event.target.value as FlowNode['kind'])}
+                      >
+                        <option value="choice">Pergunta com opções</option>
+                        <option value="result">Resultado final</option>
+                        {node.kind === 'score_branch' && (
+                          <option value="score_branch">Ramificação por pontuação</option>
+                        )}
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-2">
+                      <span className="font-label-sm text-on-surface">Texto da etapa</span>
+                      <textarea
+                        aria-label={`Texto da ${stepLabel}`}
+                        className="min-h-20 rounded-lg border border-outline-variant bg-surface px-3 py-2"
+                        value={node.text}
+                        onChange={(event) => updateNode(node.id, { text: event.target.value })}
+                      />
+                    </label>
+
+                    {node.kind === 'choice' && (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="font-label-md text-on-surface">Opções</p>
+                          <button
+                            type="button"
+                            onClick={() => addOption(node)}
+                            aria-label={`Adicionar opção na ${stepLabel}`}
+                            className="min-h-10 rounded-full bg-secondary-container px-3 font-label-md text-on-secondary-container"
+                          >
+                            Adicionar opção nesta etapa
+                          </button>
+                        </div>
+                        {node.options.map((option, optionIndex) => (
+                          <div
+                            key={option.id}
+                            className="grid gap-2 rounded-lg bg-surface-container-low p-3 md:grid-cols-3"
+                          >
+                            <label className="flex flex-col gap-1">
+                              <span className="font-label-sm text-on-surface">Texto da opção</span>
+                              <input
+                                aria-label={`Texto da opção ${optionIndex + 1} da ${stepLabel}`}
+                                className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
+                                value={option.label}
+                                onChange={(event) => updateChoiceOption(node, option.id, { label: event.target.value })}
+                              />
+                            </label>
+                            <label className="flex flex-col gap-1">
+                              <span className="font-label-sm text-on-surface">Ação</span>
+                              <select
+                                aria-label={`Ação da opção ${optionIndex + 1} da ${stepLabel}`}
+                                className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
+                                value={
+                                  option.effects?.some((effect) => effect.kind === 'flow_start') ? 'flow_start' : 'next'
+                                }
+                                onChange={(event) => {
+                                  const otherEffects = option.effects?.filter((effect) => effect.kind !== 'flow_start');
+
+                                  if (event.target.value === 'flow_start') {
+                                    updateChoiceOption(node, option.id, {
+                                      effects: [
+                                        ...(otherEffects ?? []),
+                                        {
+                                          kind: 'flow_start',
+                                          flowId: flows.find((item) => item.id !== flow.id)?.id ?? flow.id,
+                                        },
+                                      ],
+                                    });
+                                    return;
+                                  }
+
+                                  updateChoiceOption(node, option.id, {
+                                    effects: otherEffects?.length ? otherEffects : undefined,
+                                  });
+                                }}
+                              >
+                                <option value="next">Ir para etapa</option>
+                                <option value="flow_start">Começar outro fluxo</option>
+                              </select>
+                            </label>
+                            {option.effects?.some((effect) => effect.kind === 'flow_start') ? (
+                              <label className="flex flex-col gap-1">
+                                <span className="font-label-sm text-on-surface">Fluxo de destino</span>
+                                <select
+                                  aria-label={`Fluxo de destino da opção ${optionIndex + 1} da ${stepLabel}`}
+                                  className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
+                                  value={
+                                    option.effects.find((effect) => effect.kind === 'flow_start')?.flowId ?? flow.id
+                                  }
+                                  onChange={(event) =>
+                                    updateChoiceOption(node, option.id, {
+                                      effects: [
+                                        ...(option.effects?.filter((effect) => effect.kind !== 'flow_start') ?? []),
+                                        { kind: 'flow_start', flowId: event.target.value },
+                                      ],
+                                    })
+                                  }
+                                >
+                                  {flows.map((targetFlow) => (
+                                    <option key={targetFlow.id} value={targetFlow.id}>
+                                      {targetFlow.title}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            ) : (
+                              <label className="flex flex-col gap-1">
+                                <span className="font-label-sm text-on-surface">Próxima etapa</span>
+                                <select
+                                  aria-label={`Próxima etapa da opção ${optionIndex + 1} da ${stepLabel}`}
+                                  className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
+                                  value={option.next}
+                                  onChange={(event) =>
+                                    updateChoiceOption(node, option.id, { next: event.target.value })
+                                  }
+                                >
+                                  {nodes.map((targetNode) => (
+                                    <option key={targetNode.id} value={targetNode.id}>
+                                      {getFlowNodeLabel(targetNode, nodes)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {node.options.map((option, optionIndex) => (
-                    <div key={option.id} className="grid gap-2 rounded-lg bg-surface-container-low p-3 md:grid-cols-3">
-                      <label className="flex flex-col gap-1">
-                        <span className="font-label-sm text-on-surface">Texto da opção</span>
-                        <input
-                          aria-label={`Texto da opção ${optionIndex + 1}`}
-                          className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
-                          value={option.label}
-                          onChange={(event) => updateChoiceOption(node, option.id, { label: event.target.value })}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className="font-label-sm text-on-surface">Ação</span>
-                        <select
-                          aria-label={`Ação da opção ${optionIndex + 1}`}
-                          className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
-                          value={option.effects?.some((effect) => effect.kind === 'flow_start') ? 'flow_start' : 'next'}
-                          onChange={(event) => {
-                            const otherEffects = option.effects?.filter((effect) => effect.kind !== 'flow_start');
-
-                            if (event.target.value === 'flow_start') {
-                              updateChoiceOption(node, option.id, {
-                                effects: [
-                                  ...(otherEffects ?? []),
-                                  {
-                                    kind: 'flow_start',
-                                    flowId: flows.find((item) => item.id !== flow.id)?.id ?? flow.id,
-                                  },
-                                ],
-                              });
-                              return;
-                            }
-
-                            updateChoiceOption(node, option.id, {
-                              effects: otherEffects?.length ? otherEffects : undefined,
-                            });
-                          }}
-                        >
-                          <option value="next">Ir para etapa</option>
-                          <option value="flow_start">Começar outro fluxo</option>
-                        </select>
-                      </label>
-                      {option.effects?.some((effect) => effect.kind === 'flow_start') ? (
-                        <label className="flex flex-col gap-1">
-                          <span className="font-label-sm text-on-surface">Fluxo de destino</span>
-                          <select
-                            aria-label={`Fluxo de destino da opção ${optionIndex + 1}`}
-                            className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
-                            value={option.effects.find((effect) => effect.kind === 'flow_start')?.flowId ?? flow.id}
-                            onChange={(event) =>
-                              updateChoiceOption(node, option.id, {
-                                effects: [
-                                  ...(option.effects?.filter((effect) => effect.kind !== 'flow_start') ?? []),
-                                  { kind: 'flow_start', flowId: event.target.value },
-                                ],
-                              })
-                            }
-                          >
-                            {flows.map((targetFlow) => (
-                              <option key={targetFlow.id} value={targetFlow.id}>
-                                {targetFlow.title}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ) : (
-                        <label className="flex flex-col gap-1">
-                          <span className="font-label-sm text-on-surface">Próxima etapa</span>
-                          <select
-                            aria-label={`Próxima etapa da opção ${optionIndex + 1}`}
-                            className="min-h-10 rounded-lg border border-outline-variant bg-surface px-3"
-                            value={option.next}
-                            onChange={(event) => updateChoiceOption(node, option.id, { next: event.target.value })}
-                          >
-                            {nodes.map((targetNode) => (
-                              <option key={targetNode.id} value={targetNode.id}>
-                                {getFlowNodeLabel(targetNode, nodes)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </article>
-          ))}
+                )}
+              </article>
+            );
+          })}
         </div>
+        <button
+          type="button"
+          onClick={addResultNode}
+          className="min-h-11 w-fit rounded-full bg-secondary-container px-4 font-label-md text-on-secondary-container"
+        >
+          Adicionar etapa final
+        </button>
       </section>
     </section>
   );
+}
+
+function getNodeKindLabel(node: FlowNode) {
+  if (node.kind === 'choice') return 'Pergunta com opções';
+  if (node.kind === 'result') return 'Resultado final';
+  return 'Ramificação por pontuação';
+}
+
+function getNodeCountLabel(node: FlowNode) {
+  if (node.kind === 'choice') {
+    if (node.options.length === 0) return 'Sem opções';
+    return node.options.length === 1 ? '1 opção' : `${node.options.length} opções`;
+  }
+
+  if (node.kind === 'score_branch') {
+    if (node.branches.length === 0) return 'Sem caminhos';
+    return node.branches.length === 1 ? '1 caminho' : `${node.branches.length} caminhos`;
+  }
+
+  return 'Final';
+}
+
+function getNodePreview(text: string) {
+  return text.trim().replace(/\s+/g, ' ') || 'Texto vazio';
 }
 
 function createUniqueId(baseId: string, records: Record<string, unknown>) {
