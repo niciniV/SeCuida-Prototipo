@@ -104,6 +104,27 @@ describe('OrientationScreen', () => {
     expect(screen.getByText(/Antes de começar/i)).toBeInTheDocument();
   });
 
+  it('keeps previous chat messages visible when switching to another flow by phrase', () => {
+    renderOrientation();
+    startOrientationWithStarter();
+
+    fireEvent.change(screen.getByPlaceholderText('Digite ou escolha uma opção'), {
+      target: { value: 'momento mais leve' },
+    });
+    fireEvent.click(screen.getByRole('option', { name: 'Preciso de um momento mais leve' }));
+
+    expect(screen.getByText('Quero entender como estou me sentindo')).toBeInTheDocument();
+    expect(
+      screen.getByText('Vamos começar de um jeito simples, sem precisar fechar uma resposta agora.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Preciso de um momento mais leve')).toBeInTheDocument();
+
+    advanceInitialLoad();
+
+    expect(screen.getByText('Quero entender como estou me sentindo')).toBeInTheDocument();
+    expect(screen.getByText('Tudo bem escolher algo mais leve agora.')).toBeInTheDocument();
+  });
+
   it('does not render a questionnaire-specific screen entry', () => {
     renderOrientation();
 
@@ -148,6 +169,15 @@ describe('OrientationScreen', () => {
     expect(screen.getByRole('listbox', { name: 'Sugestões de resposta' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Dificuldade para descansar' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Muitas tarefas ao mesmo tempo' })).not.toBeInTheDocument();
+  });
+
+  it('reserves enough scroll padding for the autocomplete overlay', () => {
+    renderOrientation();
+    startOrientationWithStarter();
+    routeFromNeutralToWorkStress();
+
+    expect(screen.getByRole('listbox', { name: 'Sugestões de resposta' })).toBeInTheDocument();
+    expect(screen.getByRole('log', { name: 'Histórico da orientação guiada' })).toHaveClass('pb-72', 'md:pb-72');
   });
 
   it('hides suggestions when input exactly matches an option label', () => {

@@ -172,7 +172,7 @@ export function OrientationScreen() {
 
     let immediateCount: number;
     if (option.kind === 'entry_phrase') {
-      immediateCount = 0;
+      immediateCount = preAdvanceCount + 1;
     } else if (option.kind === 'resume_flow') {
       immediateCount = newState.transcript.length;
     } else {
@@ -209,7 +209,9 @@ export function OrientationScreen() {
             aria-label="Histórico da orientação guiada"
             aria-live="polite"
             ref={logRef}
-            className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-56 pt-5 [scrollbar:none] md:px-6 md:pb-48 [&::-webkit-scrollbar]:hidden"
+            className={`flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pt-5 [scrollbar:none] md:px-6 [&::-webkit-scrollbar]:hidden ${
+              visibleOptions.length > 0 ? 'pb-72 md:pb-72' : 'pb-56 md:pb-48'
+            }`}
           >
             {state?.transcript.slice(0, visibleCount).map((message) => (
               <MessageBubble key={message.id} message={message} />
