@@ -10,7 +10,7 @@ The dashboard remains a prototype editor. It does not publish directly. Public e
 
 - Render a complete Estudos material detail screen from structured material data.
 - Let dashboard editors configure the main detail content, video, external images, source link, and material body.
-- Let editors choose a banner from bundled default banner images by selecting thumbnails, not visible image names.
+- Let editors choose a featured image from bundled default images or an external image URL.
 - Let editors reorder content blocks vertically with native up/down controls.
 - Keep all edits in local dashboard draft/export data until a separate review/publish step applies them.
 - Show a preview warning banner whenever local draft content is being previewed in the public app.
@@ -37,7 +37,15 @@ The dashboard remains a prototype editor. It does not publish directly. Public e
 - `externalUrl`
 - `review`
 
-It should gain a separate `bannerImageId` for the large hero image on the detail page. Banner images come from a local catalog, for example `src/content/resources/bannerImages.ts`, and are bundled with the app. Dashboard selection uses image thumbnails visually; internal names or IDs are used only for data and accessibility labels.
+It should gain a separate `featuredImage` for the large main image on the detail page. This image can come from either a bundled default image or an external URL:
+
+```ts
+type EducationResourceFeaturedImage =
+  | { kind: 'catalog'; imageId: string }
+  | { kind: 'external'; imageUrl: string; alt?: string };
+```
+
+Bundled featured images come from a local catalog, for example `src/content/resources/featuredImages.ts`, and are packaged with the app. Dashboard catalog selection uses image thumbnails visually; internal names or IDs are used only for data and accessibility labels. External featured images use a normal URL field and should be validated before rendering.
 
 It should also expand the ordered `body` block array for the material detail page. The model should keep the existing `paragraph` name for normal text instead of introducing a new `text` kind, because `EducationResourceBlock` already uses `paragraph`, `heading`, and `list`.
 
@@ -53,7 +61,7 @@ type EducationResourceDetailBlock =
 
 `imageUrl` remains an editable external image URL. It is not an upload field. The app renders it from the content JSON when a block or list-card field references it. If future publishing requires downloading and storing remote images, that should be designed as a separate import/publishing pipeline.
 
-New dashboard-created materials must initialize `bannerImageId` with a valid catalog ID, such as the first configured banner image. This avoids creating a material that immediately fails required-banner validation.
+New dashboard-created materials must initialize `featuredImage` with a valid catalog image, such as the first configured featured image. This avoids creating a material that immediately fails required-featured-image validation.
 
 ## Public UI
 
@@ -64,7 +72,7 @@ New dashboard-created materials must initialize `bannerImageId` with a valid cat
 - A back affordance labeled `Estudos`.
 - Source/type badges.
 - Material title and short description.
-- The selected local banner image as the large hero image.
+- The selected featured image as the large main image.
 - Ordered detail blocks rendered as cards or inline sections.
 - Video blocks as configurable embedded/link cards.
 - Source-link blocks as accessible outbound links.
@@ -80,17 +88,17 @@ The exact implementation should preserve the repository's Portuguese-first tone 
 
 The `Materiais` dashboard tab should support:
 
-- Editing the list thumbnail image URL with clear copy such as `Imagem da lista`, so editors understand it affects resource cards on `/educacao`.
-- Selecting `bannerImageId` from bundled banner thumbnails.
+- Editing the list thumbnail image URL with clear copy such as `Miniatura da biblioteca`, so editors understand it affects resource cards on `/educacao`.
+- Configuring the featured image with clear copy such as `Imagem principal do material`, so editors understand it controls the large image above the detail content.
 - Adding detail blocks by type.
 - Editing block fields.
 - Removing blocks.
 - Moving blocks up or down.
 - Seeing validation errors/warnings for invalid or incomplete content.
 
-The banner picker should use clear copy such as `Banner principal do material`, so editors understand it controls the large image above the detail content. It should show only images visually. It should still provide accessible names for screen readers and a clear selected state through border, check mark, or equivalent visual treatment.
+The featured image editor should offer two source modes: bundled default images and external URL. The bundled-image picker should show only images visually. It should still provide accessible names for screen readers and a clear selected state through border, check mark, or equivalent visual treatment. The external URL mode should clearly label the input as an image URL for the main detail image.
 
-Image blocks inside the ordered body should use clear copy such as `Imagem do conteúdo`, so editors understand those images appear inline between text/video/source blocks and are separate from both the list thumbnail and the detail banner.
+Image blocks inside the ordered body should use clear copy such as `Imagem interna do conteúdo`, so editors understand those images appear inline between text/video/source blocks and are separate from both the list thumbnail and the featured detail image.
 
 Reordering should use buttons such as `Mover para cima` and `Mover para baixo`. Native controls are acceptable for this iteration and are safer than adding a drag-and-drop dependency.
 
@@ -113,7 +121,7 @@ The resolver should expose whether local drafts are active, for example:
 
 When `isPreviewingDrafts` is true, the public detail screen shows the preview warning. If feasible, the list screen can also show a smaller warning, but the detail screen warning is required because it is where draft body content is consumed.
 
-The export bundle should continue to include complete changed material records. New fields such as `bannerImageId` and detail blocks must be included automatically as part of changed `EducationResource` objects.
+The export bundle should continue to include complete changed material records. New fields such as `featuredImage` and detail blocks must be included automatically as part of changed `EducationResource` objects.
 
 ## Validation
 
@@ -121,8 +129,9 @@ Education validation should continue to reject duplicate IDs and missing require
 
 - Empty required block fields.
 - Invalid URLs for image, video, and source-link blocks.
-- Missing `bannerImageId` if the detail screen requires a banner.
-- Unknown `bannerImageId` values.
+- Missing `featuredImage` if the detail screen requires a featured image.
+- Unknown catalog IDs for `featuredImage.kind === 'catalog'`.
+- Invalid image URLs for `featuredImage.kind === 'external'`.
 
 Warnings are appropriate for non-blocking editorial gaps, such as a material with no detail blocks. Errors are appropriate for broken rendering or invalid URLs.
 
@@ -134,10 +143,10 @@ Add or update tests for:
 - Unknown resource IDs keep the existing safe fallback behavior.
 - Draft resources are previewed by public education screens when local dashboard drafts exist.
 - The preview warning appears when drafts are active.
-- The dashboard can select a banner image by thumbnail.
+- The dashboard can select a featured image by thumbnail or configure it by URL.
 - The dashboard can add, edit, remove, and reorder detail blocks.
 - Validation catches incomplete blocks and invalid URLs.
-- Export includes changed material records with banner and block fields.
+- Export includes changed material records with featured image and block fields.
 
 Run at least:
 
@@ -154,7 +163,7 @@ Before claiming implementation complete, run the repository's normal quality gat
 
 Preview confusion is the main product risk. The detail screen must show a visible warning whenever local drafts are active.
 
-External image URLs can break or disappear. The banner image uses bundled defaults to keep the primary detail visual stable; external URLs remain optional content fields.
+External image URLs can break or disappear. The featured image defaults to bundled options for stable primary detail visuals, but editors can intentionally choose an external URL when needed. Validation should prevent invalid URLs, but it cannot guarantee the long-term availability of third-party images.
 
 Dashboard editor complexity can grow quickly. This design limits content editing to simple structured blocks and native reorder controls, avoiding a full editor or drag-and-drop dependency.
 
