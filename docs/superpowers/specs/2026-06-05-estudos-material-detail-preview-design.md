@@ -39,18 +39,21 @@ The dashboard remains a prototype editor. It does not publish directly. Public e
 
 It should gain a separate `bannerImageId` for the large hero image on the detail page. Banner images come from a local catalog, for example `src/content/resources/bannerImages.ts`, and are bundled with the app. Dashboard selection uses image thumbnails visually; internal names or IDs are used only for data and accessibility labels.
 
-It should also gain an ordered content block array for the material detail page. The initial block set should be intentionally simple:
+It should also expand the ordered `body` block array for the material detail page. The model should keep the existing `paragraph` name for normal text instead of introducing a new `text` kind, because `EducationResourceBlock` already uses `paragraph`, `heading`, and `list`.
 
 ```ts
 type EducationResourceDetailBlock =
   | { id: string; kind: 'heading'; text: string }
-  | { id: string; kind: 'text'; title?: string; text: string }
+  | { id: string; kind: 'paragraph'; title?: string; text: string }
+  | { id: string; kind: 'list'; title?: string; items: string[] }
   | { id: string; kind: 'image'; imageUrl: string; alt?: string }
   | { id: string; kind: 'video'; title: string; url: string; description?: string }
   | { id: string; kind: 'sourceLink'; label: string; url: string };
 ```
 
 `imageUrl` remains an editable external image URL. It is not an upload field. The app renders it from the content JSON when a block or list-card field references it. If future publishing requires downloading and storing remote images, that should be designed as a separate import/publishing pipeline.
+
+New dashboard-created materials must initialize `bannerImageId` with a valid catalog ID, such as the first configured banner image. This avoids creating a material that immediately fails required-banner validation.
 
 ## Public UI
 
@@ -77,7 +80,7 @@ The exact implementation should preserve the repository's Portuguese-first tone 
 
 The `Materiais` dashboard tab should support:
 
-- Editing the external `imageUrl`.
+- Editing the list thumbnail image URL with clear copy such as `Imagem da lista`, so editors understand it affects resource cards on `/educacao`.
 - Selecting `bannerImageId` from bundled banner thumbnails.
 - Adding detail blocks by type.
 - Editing block fields.
@@ -85,9 +88,15 @@ The `Materiais` dashboard tab should support:
 - Moving blocks up or down.
 - Seeing validation errors/warnings for invalid or incomplete content.
 
-The banner picker should show only images visually. It should still provide accessible names for screen readers and a clear selected state through border, check mark, or equivalent visual treatment.
+The banner picker should use clear copy such as `Banner principal do material`, so editors understand it controls the large image above the detail content. It should show only images visually. It should still provide accessible names for screen readers and a clear selected state through border, check mark, or equivalent visual treatment.
+
+Image blocks inside the ordered body should use clear copy such as `Imagem do conteúdo`, so editors understand those images appear inline between text/video/source blocks and are separate from both the list thumbnail and the detail banner.
 
 Reordering should use buttons such as `Mover para cima` and `Mover para baixo`. Native controls are acceptable for this iteration and are safer than adding a drag-and-drop dependency.
+
+Block list rendering must use `block.id` as the React `key`, never the loop index. Editing must preserve each block ID and only generate IDs when adding a new block. This prevents inputs from losing focus on every keystroke when dashboard state updates bubble through the parent editor.
+
+Video blocks should accept common YouTube watch/share URLs and use a helper to convert them into safe embed URLs. If a video URL is not recognized as an embeddable YouTube URL, the detail screen should render a clean link card with a play icon instead of an iframe. This avoids broken embeds for generic video links.
 
 ## Draft Preview Data Flow
 
