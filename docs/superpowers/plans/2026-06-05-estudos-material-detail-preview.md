@@ -912,7 +912,9 @@ function ResourceBodyBlock({ block, source }: { block: EducationResourceBlock; s
       <Card className="p-6">
         {block.title ? <h2 className="mb-2 font-headline-sm text-on-surface">{block.title}</h2> : null}
         <ul className="list-disc space-y-2 pl-5 font-body-lg text-on-surface-variant">
-          {block.items?.map((item, index) => <li key={`${block.id}-${index}`}>{item}</li>)}
+          {block.items
+            ?.filter((item) => item.trim())
+            .map((item, index) => <li key={`${block.id}-${index}`}>{item}</li>)}
         </ul>
       </Card>
     );
@@ -948,17 +950,23 @@ function ResourceBodyBlock({ block, source }: { block: EducationResourceBlock; s
     }
 
     return (
-      <Card className="flex items-center gap-4 p-5">
-        <div className="flex h-16 w-20 items-center justify-center rounded-xl bg-inverse-surface text-inverse-on-surface">
+      <a
+        className="flex items-center gap-4 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-5 transition-colors hover:bg-surface-container"
+        href={video.url}
+        rel="noreferrer"
+        target="_blank"
+      >
+        <div className="flex h-16 w-20 shrink-0 items-center justify-center rounded-xl bg-inverse-surface text-inverse-on-surface">
           <Play size={28} />
         </div>
-        <div>
+        <div className="flex-1">
           {block.title ? <h2 className="font-headline-sm text-on-surface">{block.title}</h2> : null}
-          <a className="font-label-md text-primary" href={video.url} rel="noreferrer" target="_blank">
+          <span className="mt-1 inline-flex items-center gap-1 font-label-md text-primary">
             Abrir vídeo externo
-          </a>
+            <ExternalLink size={14} />
+          </span>
         </div>
-      </Card>
+      </a>
     );
   }
 
@@ -1015,10 +1023,11 @@ Append this assertion to the existing `adds a new local education material` test
 
 ```ts
 expect(screen.getByRole('group', { name: 'Imagem principal do material' })).toBeInTheDocument();
-expect(screen.getByRole('radio', { name: /mãos segurando uma planta pequena/i })).toBeChecked();
+expect(screen.getByRole('button', { name: /mãos segurando uma planta pequena/i })).toHaveAttribute(
+  'aria-pressed',
+  'true',
+);
 ```
-
-If the dashboard uses buttons instead of radios in Task 8, update the assertion there to check `aria-pressed="true"` on the selected thumbnail button.
 
 - [ ] **Step 2: Run dashboard route test and verify it fails**
 
@@ -1107,9 +1116,8 @@ it('adds, edits, and reorders material body blocks', () => {
   );
 
   fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Adicionar bloco' }));
   fireEvent.change(screen.getByLabelText('Tipo do novo bloco'), { target: { value: 'video' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Criar bloco' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Adicionar bloco' }));
   fireEvent.change(screen.getByLabelText('Título do bloco 2'), { target: { value: 'Vídeo de teste' } });
   fireEvent.change(screen.getByLabelText('URL do vídeo do bloco 2'), {
     target: { value: 'https://www.youtube.com/watch?v=abcdef12345' },
@@ -1278,8 +1286,6 @@ After the `imageUrl` field, add:
             )}
           </fieldset>
 ```
-
-If using button thumbnails, update the test from radio checked assertions to `aria-pressed` assertions.
 
 - [ ] **Step 5: Add block editor UI**
 
@@ -1493,8 +1499,6 @@ function BlockFields({
   );
 }
 ```
-
-If the test expects a "Criar bloco" button, either update the test to match the simpler `Adicionar bloco` behavior or split add into select + create exactly as tested. Keep the final UI clear.
 
 - [ ] **Step 6: Run dashboard route test and verify it passes**
 
