@@ -93,6 +93,18 @@ describe('Resources content', () => {
       expect(Array.isArray(resource.tags)).toBe(true);
     });
   });
+
+  it('seeds education resources with detail preview fields', () => {
+    const resource = resourcesContent.resources[0];
+
+    expect(resource.featuredImage).toEqual({ kind: 'catalog', imageId: 'hands-holding-plant' });
+    expect(resource.body?.map((block) => block.kind)).toEqual([
+      'paragraph',
+      'video',
+      'paragraph',
+      'sourceLink',
+    ]);
+  });
 });
 
 describe('Flow registry', () => {

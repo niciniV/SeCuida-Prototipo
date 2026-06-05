@@ -24,11 +24,34 @@ export const resourcesContent = {
       tags: ['regulação-emocional', 'sala-de-aula', 'professores'],
       audience: 'teachers',
       contentType: 'summary',
+      featuredImage: { kind: 'catalog', imageId: 'hands-holding-plant' },
       body: [
         {
           id: 'overview',
           kind: 'paragraph',
-          text: 'Material inicial para apoiar conversas sobre regulação emocional e sobrecarga no cotidiano escolar.',
+          title: 'Sobre este material',
+          text:
+            'Este conteúdo reúne orientações breves para reconhecer sinais de tensão, organizar pequenas pausas e retomar a rotina com mais presença. Ele não substitui atendimento profissional e não tem finalidade diagnóstica.',
+        },
+        {
+          id: 'breathing-video',
+          kind: 'video',
+          title: 'Vídeo: pausa de respiração para professores',
+          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          description: 'Embed configurável pelo dashboard.',
+        },
+        {
+          id: 'practice',
+          kind: 'paragraph',
+          title: 'Aplicação prática',
+          text:
+            'Uma sugestão é reservar um momento curto antes ou depois da aula para uma pausa guiada. O professor pode adaptar a prática ao tempo disponível e ao contexto da turma.',
+        },
+        {
+          id: 'source',
+          kind: 'sourceLink',
+          label: 'Acessar fonte original',
+          url: 'https://www.feevale.br/',
         },
       ],
       review: pendingReview,

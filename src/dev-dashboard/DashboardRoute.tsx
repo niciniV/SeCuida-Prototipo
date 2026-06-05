@@ -14,6 +14,7 @@ import { validateDashboardEducation } from './education/educationValidation';
 import { ExportDashboard } from './export/ExportDashboard';
 import { FlowDashboard } from './flows/FlowDashboard';
 import { validateDashboardFlows } from './flows/flowValidation';
+import { defaultFeaturedImageId } from '../content/resources/featuredImages';
 
 function upsertPatchById<T extends { id: string }>(
   records: Array<DashboardRecordPatch<T>>,
@@ -37,10 +38,20 @@ function createLocalEducationMaterial(existingCount: number) {
     title: 'Novo material',
     source: 'Equipe SeCuida',
     description: 'Material editável apenas neste navegador.',
+    imageUrl: '',
     tags: ['novo'],
     audience: 'teachers' as const,
     contentType: 'external_link' as const,
     externalUrl: 'https://example.com',
+    featuredImage: { kind: 'catalog' as const, imageId: defaultFeaturedImageId },
+    body: [
+      {
+        id: `material-local-${suffix}-overview`,
+        kind: 'paragraph' as const,
+        title: 'Sobre este material',
+        text: 'Descreva aqui o conteúdo principal do material.',
+      },
+    ],
     review: { status: 'pending_review' as const, reviewedBy: null, reviewedAt: null, notes: '' },
   };
 }
