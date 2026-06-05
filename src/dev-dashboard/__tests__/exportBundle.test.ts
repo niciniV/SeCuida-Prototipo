@@ -23,6 +23,7 @@ const material: EducationResource = {
   audience: 'teachers',
   contentType: 'summary',
   review: { status: 'pending_review', reviewedBy: null, reviewedAt: null, notes: '' },
+  featuredImage: { kind: 'catalog', imageId: 'hands-holding-plant' },
 };
 
 describe('buildExportBundle', () => {
@@ -49,5 +50,22 @@ describe('buildExportBundle', () => {
     });
 
     expect(bundle.changes.flows).toEqual([changedFlow]);
+  });
+
+  it('exports changed education materials with featured image and body blocks', () => {
+    const changedMaterial: EducationResource = {
+      ...material,
+      featuredImage: { kind: 'external', imageUrl: 'https://example.com/main.jpg' },
+      body: [{ id: 'overview', kind: 'paragraph', title: 'Sobre', text: 'Texto revisado.' }],
+    };
+
+    const bundle = buildExportBundle({
+      shipped: { flows: [], educationMaterials: [material] },
+      drafts: { flows: [], educationMaterials: [changedMaterial] },
+      validation: { errors: [], warnings: [] },
+      exportedAt: '2026-06-05T00:00:00.000Z',
+    });
+
+    expect(bundle.changes.educationMaterials).toEqual([changedMaterial]);
   });
 });
