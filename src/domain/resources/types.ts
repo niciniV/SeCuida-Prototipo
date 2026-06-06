@@ -1,12 +1,5 @@
 import type { ContentMetadata, ReviewMetadata } from '../content/types';
 
-export type EducationResourceContentType =
-  | 'article'
-  | 'summary'
-  | 'external_link'
-  | 'pdf_link'
-  | 'video_link'
-  | 'audio_link';
 export type EducationResourceAudience = 'teachers' | 'public_school_teachers' | 'general';
 
 export type EducationResourceFeaturedImage =
@@ -42,9 +35,7 @@ export interface EducationResource {
   featuredImage?: EducationResourceFeaturedImage;
   tags: string[];
   audience: EducationResourceAudience;
-  contentType: EducationResourceContentType;
   body?: EducationResourceBlock[];
-  externalUrl?: string;
   embed?: EducationResourceEmbed;
   href?: string;
   review: ReviewMetadata;

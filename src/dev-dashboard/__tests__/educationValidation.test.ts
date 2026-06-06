@@ -11,7 +11,6 @@ const baseResource: EducationResource = {
   featuredImage: { kind: 'catalog', imageId: 'hands-holding-plant' },
   tags: ['descanso'],
   audience: 'teachers',
-  contentType: 'summary',
   review: {
     status: 'pending_review',
     reviewedBy: null,
@@ -28,17 +27,6 @@ describe('validateDashboardEducation', () => {
       expect.objectContaining({
         id: 'duplicate-material-id:resource-one',
         message: 'Existe mais de um material com o ID "resource-one".',
-      }),
-    );
-  });
-
-  it('rejects video materials without URL', () => {
-    const result = validateDashboardEducation([{ ...baseResource, contentType: 'video_link' }]);
-
-    expect(result.errors).toContainEqual(
-      expect.objectContaining({
-        id: 'missing-url:resource-one',
-        message: 'Este tipo de material precisa de um link público.',
       }),
     );
   });

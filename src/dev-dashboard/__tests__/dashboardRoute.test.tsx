@@ -55,8 +55,6 @@ vi.mock('../content/shippedContent', () => ({
         description: 'Descrição do material.',
         tags: ['teste'],
         audience: 'teachers',
-        contentType: 'external_link',
-        externalUrl: 'https://example.com',
         review: { status: 'pending_review', reviewedBy: null, reviewedAt: null, notes: '' },
       },
     ],
@@ -124,7 +122,6 @@ describe('DashboardRoute', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
 
     expect(await screen.findByRole('heading', { name: 'Materiais' })).toBeInTheDocument();
-    expect(screen.getByText('Escolha como este material será aberto no app.')).toBeInTheDocument();
     expect(screen.getByText('Use palavras curtas para ajudar professores a encontrar o material.')).toBeInTheDocument();
   });
 
@@ -283,22 +280,6 @@ describe('DashboardRoute', () => {
 
     expect(screen.getByDisplayValue('Descrição editada localmente')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Fonte editada localmente')).toBeInTheDocument();
-  });
-
-  it('updates a link-based education URL draft', () => {
-    render(
-      <MemoryRouter>
-        <DashboardRoute />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
-
-    fireEvent.change(screen.getByLabelText('Link público do material'), {
-      target: { value: 'https://example.com/material.pdf' },
-    });
-
-    expect(screen.getByDisplayValue('https://example.com/material.pdf')).toBeInTheDocument();
   });
 
   it('adds, edits, and removes education tags', () => {

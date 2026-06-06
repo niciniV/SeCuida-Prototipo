@@ -21,7 +21,6 @@ const material: EducationResource = {
   description: 'Descrição.',
   tags: ['descanso'],
   audience: 'teachers',
-  contentType: 'summary',
   review: { status: 'pending_review', reviewedBy: null, reviewedAt: null, notes: '' },
   featuredImage: { kind: 'catalog', imageId: 'hands-holding-plant' },
 };

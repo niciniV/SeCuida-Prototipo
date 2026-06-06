@@ -83,13 +83,12 @@ describe('Resources content', () => {
     expect(resourcesContent.resources.length).toBeGreaterThan(0);
   });
 
-  it('every resource has id, title, source, description, tags, and content type', () => {
+  it('every resource has id, title, source, description, and tags', () => {
     resourcesContent.resources.forEach((resource) => {
       expect(resource.id).toBeTruthy();
       expect(resource.title).toBeTruthy();
       expect(resource.source).toBeTruthy();
       expect(resource.description).toBeTruthy();
-      expect(resource.contentType).toBeTruthy();
       expect(Array.isArray(resource.tags)).toBe(true);
     });
   });

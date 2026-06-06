@@ -7,8 +7,16 @@ import type {
 } from '../../domain/resources/types';
 import { FieldHint } from '../components/FieldHint';
 import { ValidationSummary } from '../components/ValidationSummary';
-import { educationContentTypeLabels, educationTypesRequiringUrl } from './educationTypes';
 import { validateDashboardEducation } from './educationValidation';
+
+const blockKindLabels: Record<EducationResourceBlock['kind'], string> = {
+  paragraph: 'Parágrafo',
+  heading: 'Título',
+  list: 'Lista',
+  image: 'Imagem',
+  video: 'Vídeo',
+  sourceLink: 'Link da fonte',
+};
 
 export function EducationDashboard({
   resources,
@@ -170,43 +178,7 @@ export function EducationDashboard({
             />
             <FieldHint>Nome da organização, autora ou referência principal do material.</FieldHint>
           </label>
-          <label className="flex flex-col gap-2">
-            <span className="font-label-md text-on-surface">Tipo do material</span>
-            <select
-              className="min-h-11 rounded-lg border border-outline-variant bg-surface px-3"
-              value={selectedResource.contentType}
-              onChange={(event) =>
-                onResourceChange(selectedResourceIndex, selectedResource.id, {
-                  contentType: event.target.value as EducationResource['contentType'],
-                })
-              }
-            >
-              {Object.entries(educationContentTypeLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <FieldHint>Escolha como este material será aberto no app.</FieldHint>
-          </label>
-          <>
-            {educationTypesRequiringUrl.includes(selectedResource.contentType) && (
-              <label className="flex flex-col gap-2">
-                <span className="font-label-md text-on-surface">Link público do material</span>
-                <input
-                  aria-label="Link público do material"
-                  className="min-h-11 rounded-lg border border-outline-variant bg-surface px-3"
-                  value={selectedResource.externalUrl ?? ''}
-                  onChange={(event) =>
-                    onResourceChange(selectedResourceIndex, selectedResource.id, { externalUrl: event.target.value })
-                  }
-                />
-                <FieldHint>
-                  Use um link público de vídeo, áudio, PDF ou página externa. Uploads não são aceitos.
-                </FieldHint>
-              </label>
-            )}
-          </>
+
 
           <label className="flex flex-col gap-2">
             <span className="font-label-md text-on-surface">Miniatura da biblioteca</span>
@@ -322,7 +294,7 @@ export function EducationDashboard({
                 <div key={block.id} className="flex flex-col gap-3 rounded-lg border border-outline-variant/30 p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-label-md text-on-surface-variant font-semibold">
-                      Bloco {blockNumber} ({block.kind})
+                      Bloco {blockNumber} — {blockKindLabels[block.kind]}
                     </span>
                     <div className="flex gap-2">
                       <button
@@ -369,12 +341,11 @@ export function EducationDashboard({
                 value={newBlockKind}
                 onChange={(event) => setNewBlockKind(event.target.value as EducationResourceBlock['kind'])}
               >
-                <option value="paragraph">Parágrafo</option>
-                <option value="heading">Título</option>
-                <option value="list">Lista</option>
-                <option value="image">Imagem</option>
-                <option value="video">Vídeo</option>
-                <option value="sourceLink">Link da fonte</option>
+                {Object.entries(blockKindLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
               </select>
             </label>
             <button

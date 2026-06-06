@@ -41,8 +41,6 @@ function createLocalEducationMaterial(existingCount: number) {
     imageUrl: '',
     tags: ['novo'],
     audience: 'teachers' as const,
-    contentType: 'external_link' as const,
-    externalUrl: 'https://example.com',
     featuredImage: { kind: 'catalog' as const, imageId: defaultFeaturedImageId },
     body: [
       {

@@ -2,7 +2,6 @@ import type { EducationResource } from '../../domain/resources/types';
 import { findFeaturedImageOption } from '../../content/resources/featuredImages';
 import { createValidationResult, type DashboardValidationIssue } from '../validation/validationTypes';
 import { findDuplicateIds } from '../validation/duplicateIds';
-import { educationTypesRequiringUrl } from './educationTypes';
 
 type EducationResourceBodyBlock = NonNullable<EducationResource['body']>[number];
 
@@ -30,26 +29,6 @@ export function validateDashboardEducation(resources: EducationResource[]) {
         id: `empty-tags:${resource.id}`,
         message: 'Este material ainda não tem tags.',
         path: `${resource.id}.tags`,
-      });
-    }
-
-    if (educationTypesRequiringUrl.includes(resource.contentType) && !resource.externalUrl?.trim()) {
-      issues.push({
-        level: 'error',
-        area: 'education',
-        id: `missing-url:${resource.id}`,
-        message: 'Este tipo de material precisa de um link público.',
-        path: `${resource.id}.externalUrl`,
-      });
-    }
-
-    if (resource.contentType === 'video_link' && resource.externalUrl && !isHttpUrl(resource.externalUrl)) {
-      issues.push({
-        level: 'error',
-        area: 'education',
-        id: `invalid-video-url:${resource.id}`,
-        message: 'Este link não parece ser um vídeo compatível.',
-        path: `${resource.id}.externalUrl`,
       });
     }
 
