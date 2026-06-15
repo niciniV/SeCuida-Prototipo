@@ -4,6 +4,11 @@ import { supportContacts } from '../support/contacts';
 import { canoasServices } from '../services/canoas-services';
 import { resourcesContent } from '../resources/resources';
 import { flowRegistry } from '../flows/registry';
+import {
+  educationResourceGroups,
+  DEFAULT_EDUCATION_GROUP_ID,
+} from '../resources/groups';
+import type { EducationResourceGroup } from '../resources/groups';
 
 describe('Home copy', () => {
   it('has required fields', () => {
@@ -125,5 +130,39 @@ describe('Flow registry', () => {
     });
     expect(flows.filter((flow) => flow.purpose === 'orientation_entry')).toHaveLength(4);
     expect(flows.find((flow) => flow.id === 'post-flow-next-step')?.purpose).toBe('post_flow_routing');
+  });
+});
+
+describe('Education resource groups', () => {
+  it('exports an array that is not empty', () => {
+    expect(educationResourceGroups).toBeInstanceOf(Array);
+    expect(educationResourceGroups.length).toBeGreaterThan(0);
+  });
+
+  it('every group has required id, title, and numeric order', () => {
+    educationResourceGroups.forEach((group: EducationResourceGroup) => {
+      expect(typeof group.id).toBe('string');
+      expect(group.id).toBeTruthy();
+      expect(typeof group.title).toBe('string');
+      expect(group.title).toBeTruthy();
+      expect(typeof group.order).toBe('number');
+    });
+  });
+
+  it('every group has a unique id', () => {
+    const ids = educationResourceGroups.map((g: EducationResourceGroup) => g.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('no group uses the reserved geral ID', () => {
+    const ids = educationResourceGroups.map((g: EducationResourceGroup) => g.id);
+    expect(ids).not.toContain(DEFAULT_EDUCATION_GROUP_ID);
+  });
+
+  it('includes the shipped groups: auto-cuidado, sala-de-aula, formacao', () => {
+    const ids = educationResourceGroups.map((g: EducationResourceGroup) => g.id);
+    expect(ids).toContain('auto-cuidado');
+    expect(ids).toContain('sala-de-aula');
+    expect(ids).toContain('formacao');
   });
 });
