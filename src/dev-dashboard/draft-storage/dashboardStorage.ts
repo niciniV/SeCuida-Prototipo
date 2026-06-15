@@ -1,9 +1,10 @@
 import type { GuidedFlow } from '../../domain/flow-engine/types';
 import type { EducationResource } from '../../domain/resources/types';
+import type { EducationResourceGroup } from '../../content/resources/groups';
 import type { DashboardShippedContent } from '../content/shippedContent';
 
 const STORAGE_KEY = 'secuida:dev-dashboard:drafts:v1';
-export const DASHBOARD_DRAFT_SCHEMA_VERSION = '1.0.0' as const;
+export const DASHBOARD_DRAFT_SCHEMA_VERSION = '2.0.0' as const;
 
 export interface DashboardRecordPatch<T extends { id: string }> {
   id: string;
@@ -15,8 +16,10 @@ export interface DashboardDraftState {
   schemaVersion: typeof DASHBOARD_DRAFT_SCHEMA_VERSION;
   flowPatches: Array<DashboardRecordPatch<GuidedFlow>>;
   educationMaterialPatches: Array<DashboardRecordPatch<EducationResource>>;
+  groupPatches: Array<DashboardRecordPatch<EducationResourceGroup>>;
   addedFlows: GuidedFlow[];
   addedEducationMaterials: EducationResource[];
+  addedGroups: EducationResourceGroup[];
   updatedAt: string | null;
 }
 
@@ -25,8 +28,10 @@ export function createEmptyDashboardDraftState(): DashboardDraftState {
     schemaVersion: DASHBOARD_DRAFT_SCHEMA_VERSION,
     flowPatches: [],
     educationMaterialPatches: [],
+    groupPatches: [],
     addedFlows: [],
     addedEducationMaterials: [],
+    addedGroups: [],
     updatedAt: null,
   };
 }
@@ -37,6 +42,14 @@ export function loadDashboardDrafts(storage: Storage = localStorage): DashboardD
 
   try {
     const parsed = JSON.parse(raw) as DashboardDraftState;
+    if (parsed.schemaVersion === '1.0.0') {
+      return {
+        ...parsed,
+        schemaVersion: DASHBOARD_DRAFT_SCHEMA_VERSION,
+        groupPatches: (parsed as Record<string, unknown>).groupPatches ?? [],
+        addedGroups: (parsed as Record<string, unknown>).addedGroups ?? [],
+      } as DashboardDraftState;
+    }
     if (parsed.schemaVersion !== DASHBOARD_DRAFT_SCHEMA_VERSION) return createEmptyDashboardDraftState();
     return parsed;
   } catch {
@@ -59,6 +72,11 @@ export function mergeDashboardDrafts(shipped: DashboardShippedContent, drafts: D
       shipped.educationMaterials,
       drafts.educationMaterialPatches,
       drafts.addedEducationMaterials,
+    ),
+    educationGroups: mergeRecords(
+      shipped.educationGroups,
+      drafts.groupPatches,
+      drafts.addedGroups,
     ),
   };
 }

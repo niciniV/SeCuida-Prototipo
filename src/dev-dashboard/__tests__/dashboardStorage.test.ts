@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { GuidedFlow } from '../../domain/flow-engine/types';
 import type { EducationResource } from '../../domain/resources/types';
+import type { EducationResourceGroup } from '../../content/resources/groups';
 import type { DashboardDraftState } from '../draft-storage/dashboardStorage';
 import {
   DASHBOARD_DRAFT_SCHEMA_VERSION,
@@ -9,13 +10,16 @@ import {
   mergeDashboardDrafts,
   saveDashboardDrafts,
 } from '../draft-storage/dashboardStorage';
+import { getShippedDashboardContent } from '../content/shippedContent';
 
 const emptyDraft: DashboardDraftState = {
   schemaVersion: DASHBOARD_DRAFT_SCHEMA_VERSION,
   flowPatches: [],
   educationMaterialPatches: [],
+  groupPatches: [],
   addedFlows: [],
   addedEducationMaterials: [],
+  addedGroups: [],
   updatedAt: '2026-05-22T00:00:00.000Z',
 };
 
@@ -29,8 +33,10 @@ describe('dashboardStorage', () => {
       schemaVersion: DASHBOARD_DRAFT_SCHEMA_VERSION,
       flowPatches: [],
       educationMaterialPatches: [],
+      groupPatches: [],
       addedFlows: [],
       addedEducationMaterials: [],
+      addedGroups: [],
       updatedAt: null,
     });
   });
@@ -56,9 +62,10 @@ describe('dashboardStorage', () => {
       flowPatches: [{ id: 'flow-one', sourceIndex: 0, patch: { title: 'Edited flow' } }],
     };
 
-    expect(mergeDashboardDrafts({ flows: [shippedFlow], educationMaterials: [shippedMaterial] }, draft)).toEqual({
+    expect(mergeDashboardDrafts({ flows: [shippedFlow], educationMaterials: [shippedMaterial], educationGroups: [] }, draft)).toEqual({
       flows: [{ ...shippedFlow, title: 'Edited flow' }],
       educationMaterials: [shippedMaterial],
+      educationGroups: [],
     });
   });
 
@@ -70,7 +77,7 @@ describe('dashboardStorage', () => {
       flowPatches: [{ id: 'duplicate-flow', sourceIndex: 1, patch: { title: 'Edited second flow' } }],
     };
 
-    expect(mergeDashboardDrafts({ flows: [firstFlow, secondFlow], educationMaterials: [] }, draft).flows).toEqual([
+    expect(mergeDashboardDrafts({ flows: [firstFlow, secondFlow], educationMaterials: [], educationGroups: [] }, draft).flows).toEqual([
       firstFlow,
       { ...secondFlow, title: 'Edited second flow' },
     ]);
@@ -84,9 +91,83 @@ describe('dashboardStorage', () => {
       flowPatches: [{ id: 'legacy-flow', patch: { title: 'Legacy edited flow' } }],
     };
 
-    expect(mergeDashboardDrafts({ flows: [firstFlow, secondFlow], educationMaterials: [] }, draft).flows).toEqual([
+    expect(mergeDashboardDrafts({ flows: [firstFlow, secondFlow], educationMaterials: [], educationGroups: [] }, draft).flows).toEqual([
       { ...firstFlow, title: 'Legacy edited flow' },
       secondFlow,
     ]);
+  });
+
+  it('includes educationGroups in shipped content', () => {
+    const shipped = getShippedDashboardContent();
+    expect(shipped.educationGroups).toBeDefined();
+    expect(shipped.educationGroups.length).toBeGreaterThan(0);
+  });
+
+  it('includes groupPatches and addedGroups in draft state', () => {
+    const draft = loadDashboardDrafts();
+    expect(draft.groupPatches).toEqual([]);
+    expect(draft.addedGroups).toEqual([]);
+  });
+
+  it('migrates v1 localStorage value to v2 preserving existing fields', () => {
+    const v1Draft = {
+      schemaVersion: '1.0.0',
+      flowPatches: [{ id: 'flow-one', sourceIndex: 0, patch: { title: 'Edited' } }],
+      educationMaterialPatches: [],
+      addedFlows: [],
+      addedEducationMaterials: [],
+      updatedAt: '2026-05-22T00:00:00.000Z',
+    };
+    localStorage.setItem('secuida:dev-dashboard:drafts:v1', JSON.stringify(v1Draft));
+
+    const loaded = loadDashboardDrafts();
+
+    expect(loaded.schemaVersion).toBe(DASHBOARD_DRAFT_SCHEMA_VERSION);
+    expect(loaded.flowPatches).toEqual(v1Draft.flowPatches);
+    expect(loaded.educationMaterialPatches).toEqual(v1Draft.educationMaterialPatches);
+    expect(loaded.addedFlows).toEqual(v1Draft.addedFlows);
+    expect(loaded.addedEducationMaterials).toEqual(v1Draft.addedEducationMaterials);
+    expect(loaded.updatedAt).toBe(v1Draft.updatedAt);
+    expect(loaded.groupPatches).toEqual([]);
+    expect(loaded.addedGroups).toEqual([]);
+  });
+
+  it('migrates v1 draft with group data to v2 preserving groups', () => {
+    const v1Draft = {
+      schemaVersion: '1.0.0',
+      flowPatches: [],
+      educationMaterialPatches: [],
+      addedFlows: [],
+      addedEducationMaterials: [],
+      updatedAt: '2026-05-22T00:00:00.000Z',
+      groupPatches: [{ id: 'auto-cuidado', sourceIndex: 0, patch: { title: 'Edited Group' } }],
+      addedGroups: [{ id: 'new-group', title: 'New Group', order: 5 }],
+    };
+    localStorage.setItem('secuida:dev-dashboard:drafts:v1', JSON.stringify(v1Draft));
+
+    const loaded = loadDashboardDrafts();
+
+    expect(loaded.schemaVersion).toBe(DASHBOARD_DRAFT_SCHEMA_VERSION);
+    expect(loaded.groupPatches).toEqual(v1Draft.groupPatches);
+    expect(loaded.addedGroups).toEqual(v1Draft.addedGroups);
+  });
+
+  it('resets to empty v2 draft for unknown schema version', () => {
+    const unknownDraft = {
+      schemaVersion: '0.0.0',
+      flowPatches: [{ id: 'flow-one', sourceIndex: 0, patch: { title: 'Edited' } }],
+      educationMaterialPatches: [],
+      addedFlows: [],
+      addedEducationMaterials: [],
+      updatedAt: '2026-05-22T00:00:00.000Z',
+    };
+    localStorage.setItem('secuida:dev-dashboard:drafts:v1', JSON.stringify(unknownDraft));
+
+    const loaded = loadDashboardDrafts();
+
+    expect(loaded.schemaVersion).toBe(DASHBOARD_DRAFT_SCHEMA_VERSION);
+    expect(loaded.flowPatches).toEqual([]);
+    expect(loaded.addedGroups).toEqual([]);
+    expect(loaded.updatedAt).toBeNull();
   });
 });

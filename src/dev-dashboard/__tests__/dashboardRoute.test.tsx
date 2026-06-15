@@ -58,6 +58,7 @@ vi.mock('../content/shippedContent', () => ({
         review: { status: 'pending_review', reviewedBy: null, reviewedAt: null, notes: '' },
       },
     ],
+    educationGroups: [],
   }),
 }));
 
