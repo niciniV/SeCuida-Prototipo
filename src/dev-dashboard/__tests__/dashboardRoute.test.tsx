@@ -412,7 +412,17 @@ describe('DashboardRoute', () => {
 
     render(
       <EducationDashboard
-        resources={[]}
+        resources={[
+          {
+            id: 'mock-material',
+            title: 'Material de teste',
+            source: 'Equipe SeCuida',
+            description: 'Descrição do material.',
+            tags: ['teste'],
+            audience: 'teachers',
+            review: { status: 'pending_review', reviewedBy: null, reviewedAt: null, notes: '' },
+          },
+        ]}
         groups={[{ id: 'mock-group', title: 'Grupo de teste', order: 1 }]}
         shippedGroups={[{ id: 'mock-group', title: 'Grupo de teste', order: 1 }]}
         onResourceChange={vi.fn()}
@@ -423,7 +433,7 @@ describe('DashboardRoute', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Grupos de materiais' }));
+    fireEvent.click(screen.getByRole('button', { name: /Grupos de materiais/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Novo grupo' }));
 
     expect(onGroupAdd).toHaveBeenCalledOnce();
@@ -434,7 +444,17 @@ describe('DashboardRoute', () => {
 
     render(
       <EducationDashboard
-        resources={[]}
+        resources={[
+          {
+            id: 'mock-material',
+            title: 'Material de teste',
+            source: 'Equipe SeCuida',
+            description: 'Descrição do material.',
+            tags: ['teste'],
+            audience: 'teachers',
+            review: { status: 'pending_review', reviewedBy: null, reviewedAt: null, notes: '' },
+          },
+        ]}
         groups={[
           { id: 'mock-group', title: 'Grupo de teste', order: 1 },
           { id: 'added-group', title: 'Grupo editável', order: 2 },
@@ -448,7 +468,7 @@ describe('DashboardRoute', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Grupos de materiais' }));
+    fireEvent.click(screen.getByRole('button', { name: /Grupos de materiais/i }));
     const groupTitleInput = screen.getByDisplayValue('Grupo editável');
     fireEvent.change(groupTitleInput, { target: { value: 'Título do grupo editado' } });
 
@@ -460,7 +480,17 @@ describe('DashboardRoute', () => {
 
     render(
       <EducationDashboard
-        resources={[]}
+        resources={[
+          {
+            id: 'mock-material',
+            title: 'Material de teste',
+            source: 'Equipe SeCuida',
+            description: 'Descrição do material.',
+            tags: ['teste'],
+            audience: 'teachers',
+            review: { status: 'pending_review', reviewedBy: null, reviewedAt: null, notes: '' },
+          },
+        ]}
         groups={[
           { id: 'mock-group', title: 'Grupo de teste', order: 1 },
           { id: 'added-group', title: 'Grupo adicionado', order: 2 },
@@ -474,10 +504,10 @@ describe('DashboardRoute', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Grupos de materiais' }));
+    fireEvent.click(screen.getByRole('button', { name: /Grupos de materiais/i }));
     expect(screen.getByDisplayValue('Grupo adicionado')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remover grupo' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Remover$/i }));
 
     expect(onGroupRemove).toHaveBeenCalledWith(1, 'added-group');
   });
