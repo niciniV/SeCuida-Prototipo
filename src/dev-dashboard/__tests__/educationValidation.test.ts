@@ -84,7 +84,7 @@ describe('validateDashboardEducation', () => {
     expect(result.errors).toContainEqual(
       expect.objectContaining({
         id: 'invalid-featured-image-url:resource-one',
-        message: 'A URL da imagem principal precisa começar com http:// ou https://.',
+        message: 'A URL da imagem principal precisa ser um link http://, https:// ou um arquivo enviado.',
       }),
     );
   });
@@ -112,7 +112,7 @@ describe('validateDashboardEducation', () => {
     expect(result.errors).toContainEqual(
       expect.objectContaining({
         id: 'invalid-body-image-url:resource-one:image-one',
-        message: 'A URL da imagem interna precisa começar com http:// ou https://.',
+        message: 'A URL da imagem interna precisa ser um link http://, https:// ou um arquivo enviado.',
       }),
     );
   });

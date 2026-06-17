@@ -147,7 +147,7 @@ describe('DashboardRoute', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Exportar' }));
 
     expect(screen.getByRole('heading', { name: 'Arquivo para revisão' })).toBeInTheDocument();
-    expect(screen.getByText('Ele não publica nada sozinho.')).toBeInTheDocument();
+    expect(screen.getByText('Ele contém o JSON de dados e as imagens enviadas.')).toBeInTheDocument();
   });
 
   it('updates a local flow title draft', () => {
