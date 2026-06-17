@@ -12,11 +12,13 @@ beforeEach(() => {
 
 function createDraftState(overrides: Record<string, unknown> = {}) {
   return {
-    schemaVersion: '1.0.0',
+    schemaVersion: '2.0.0',
     flowPatches: [],
     educationMaterialPatches: [],
+    groupPatches: [],
     addedFlows: [],
     addedEducationMaterials: [],
+    addedGroups: [],
     updatedAt: '2026-06-05T00:00:00.000Z',
     ...overrides,
   };
@@ -76,6 +78,277 @@ describe('EducationLibraryScreen', () => {
 
     expect(screen.getByText(/versão de teste/i)).toBeInTheDocument();
     expect(screen.getByText('Material adicionado em teste')).toBeInTheDocument();
+  });
+
+  it('renders named group headings only for groups with resources', () => {
+    const resource = resourcesContent.resources[0];
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          addedGroups: [{ id: 'unused-group', title: 'Grupo sem recursos', order: 10 }],
+          addedEducationMaterials: [
+            {
+              ...resource,
+              id: 'material-in-group',
+              title: 'Material em grupo',
+              group: 'auto-cuidado',
+            },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/educacao']}>
+        <Routes>
+          <Route path="/educacao" element={<EducationLibraryScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // 'Autocuidado' group heading should appear because it has resources
+    expect(screen.getByRole('heading', { name: 'Autocuidado' })).toBeInTheDocument();
+    // 'Grupo sem recursos' should NOT appear
+    expect(screen.queryByRole('heading', { name: 'Grupo sem recursos' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Grupo sem recursos')).not.toBeInTheDocument();
+  });
+
+  it('does not render headings for empty groups', () => {
+    const resource = resourcesContent.resources[0];
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          addedGroups: [{ id: 'empty-group', title: 'Grupo Vazio', order: 5 }],
+          addedEducationMaterials: [
+            {
+              ...resource,
+              id: 'material-no-group',
+              title: 'Material sem grupo',
+            },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/educacao']}>
+        <Routes>
+          <Route path="/educacao" element={<EducationLibraryScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('heading', { name: 'Grupo Vazio' })).not.toBeInTheDocument();
+    expect(screen.getByText('Material sem grupo')).toBeInTheDocument();
+  });
+
+  it('renders named groups ordered by their order field', () => {
+    const resource = resourcesContent.resources[0];
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          addedGroups: [
+            { id: 'group-z', title: 'Grupo Z', order: 30 },
+            { id: 'group-a', title: 'Grupo A', order: 10 },
+            { id: 'group-m', title: 'Grupo M', order: 20 },
+          ],
+          addedEducationMaterials: [
+            { ...resource, id: 'mat-z', title: 'Material Z', group: 'group-z', groupOrder: 1 },
+            { ...resource, id: 'mat-a', title: 'Material A', group: 'group-a', groupOrder: 1 },
+            { ...resource, id: 'mat-m', title: 'Material M', group: 'group-m', groupOrder: 1 },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/educacao']}>
+        <Routes>
+          <Route path="/educacao" element={<EducationLibraryScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const groupHeadings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(groupHeadings).toEqual(['Grupo A', 'Grupo M', 'Grupo Z']);
+  });
+
+  it('renders geral section first without a heading', () => {
+    const resource = resourcesContent.resources[0];
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          addedGroups: [{ id: 'first-group', title: 'Primeiro Grupo', order: 1 }],
+          addedEducationMaterials: [
+            { ...resource, id: 'mat-geral', title: 'Material Geral', group: 'geral' },
+            { ...resource, id: 'mat-named', title: 'Material Named', group: 'first-group' },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/educacao']}>
+        <Routes>
+          <Route path="/educacao" element={<EducationLibraryScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // geral has no heading (h2); named group heading should appear
+    const groupHeadings = screen.getAllByRole('heading', { level: 2 });
+    expect(groupHeadings).toHaveLength(1);
+    expect(groupHeadings[0].textContent).toBe('Primeiro Grupo');
+    // geral resources should still be visible
+    expect(screen.getByText('Material Geral')).toBeInTheDocument();
+    expect(screen.getByText('Material Named')).toBeInTheDocument();
+  });
+
+  it('renders geral according to the default group order', () => {
+    const resource = resourcesContent.resources[0];
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          defaultGroupOrder: 2,
+          addedGroups: [{ id: 'first-group', title: 'Primeiro Grupo', order: 1 }],
+          addedEducationMaterials: [
+            { ...resource, id: 'mat-geral', title: 'Material Geral', group: 'geral' },
+            { ...resource, id: 'mat-named', title: 'Material Pinned', group: 'first-group' },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/educacao']}>
+        <Routes>
+          <Route path="/educacao" element={<EducationLibraryScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const pinnedHeading = screen.getByRole('heading', { name: 'Primeiro Grupo' });
+    const pinnedMaterial = screen.getByText('Material Pinned');
+    const geralMaterial = screen.getByText('Material Geral');
+
+    expect(pinnedHeading.compareDocumentPosition(pinnedMaterial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(pinnedMaterial.compareDocumentPosition(geralMaterial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('separates geral from a previous named group without rendering a geral heading', () => {
+    const resource = resourcesContent.resources[0];
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          defaultGroupOrder: 2,
+          addedGroups: [{ id: 'auto-group', title: 'Autocuidado', order: 1 }],
+          addedEducationMaterials: [
+            { ...resource, id: 'mat-autocuidado', title: 'Material Autocuidado', group: 'auto-group' },
+            { ...resource, id: 'mat-geral', title: 'Material Geral', group: 'geral' },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/educacao']}>
+        <Routes>
+          <Route path="/educacao" element={<EducationLibraryScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const separator = screen.getByRole('separator', { name: 'Separador entre grupos de materiais' });
+    const autocuidadoHeading = screen.getByRole('heading', { name: 'Autocuidado' });
+    const geralMaterial = screen.getByText('Material Geral');
+
+    expect(separator).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Geral' })).not.toBeInTheDocument();
+    expect(autocuidadoHeading.compareDocumentPosition(separator)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(separator.compareDocumentPosition(geralMaterial)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('sorts resources within groups by groupOrder with stable tie-breaking', () => {
+    const resource = resourcesContent.resources[0];
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          addedEducationMaterials: [
+            { ...resource, id: 'mat-3', title: 'Terceiro', group: 'geral', groupOrder: 3 },
+            { ...resource, id: 'mat-1', title: 'Primeiro', group: 'geral', groupOrder: 1 },
+            { ...resource, id: 'mat-2', title: 'Segundo', group: 'geral', groupOrder: 2 },
+            { ...resource, id: 'mat-undefined', title: 'Sem order', group: 'geral' },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/educacao']}>
+        <Routes>
+          <Route path="/educacao" element={<EducationLibraryScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // geral has no h2 heading; check resource card titles (h3) instead
+    // Filter out the shipped resource that also renders in geral
+    const resourceTitles = screen
+      .getAllByRole('heading', { level: 3 })
+      .map((h) => h.textContent)
+      .filter((t) => t !== resource.title);
+    expect(resourceTitles).toEqual(['Primeiro', 'Segundo', 'Terceiro', 'Sem order']);
+  });
+
+  it('falls back dangling group references to geral', () => {
+    const resource = resourcesContent.resources[0];
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          addedEducationMaterials: [
+            { ...resource, id: 'mat-dangling', title: 'Material Órfão', group: 'non-existent-group' },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/educacao']}>
+        <Routes>
+          <Route path="/educacao" element={<EducationLibraryScreen />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // Should still render (in geral section since group doesn't exist)
+    expect(screen.getByText('Material Órfão')).toBeInTheDocument();
+    // Should NOT have any extra heading since it's in geral
+    const headings = screen.getAllByRole('heading');
+    expect(headings.every((h) => h.textContent !== 'Material Órfão')).toBe(false);
+  });
+
+  it('sets isPreviewingDrafts true when only groups have drafts', async () => {
+    localStorage.setItem(
+      'secuida:dev-dashboard:drafts:v1',
+      JSON.stringify(
+        createDraftState({
+          addedGroups: [{ id: 'new-group', title: 'Novo Grupo', order: 5 }],
+        }),
+      ),
+    );
+
+    const { resolveEducationResourcesForPreview } = await import('../educationResourcePreview');
+    const preview = resolveEducationResourcesForPreview();
+
+    expect(preview.isPreviewingDrafts).toBe(true);
   });
 });
 

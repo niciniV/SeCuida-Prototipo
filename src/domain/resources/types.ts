@@ -38,6 +38,8 @@ export interface EducationResource {
   body?: EducationResourceBlock[];
   embed?: EducationResourceEmbed;
   href?: string;
+  group?: string;
+  groupOrder?: number;
   review: ReviewMetadata;
 }
 

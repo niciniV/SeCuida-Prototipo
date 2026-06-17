@@ -1,9 +1,10 @@
 import type { GuidedFlow } from '../../domain/flow-engine/types';
 import type { EducationResource } from '../../domain/resources/types';
+import type { EducationResourceGroup } from '../../content/resources/groups';
 import type { DashboardShippedContent } from '../content/shippedContent';
 
 const STORAGE_KEY = 'secuida:dev-dashboard:drafts:v1';
-export const DASHBOARD_DRAFT_SCHEMA_VERSION = '1.0.0' as const;
+export const DASHBOARD_DRAFT_SCHEMA_VERSION = '2.0.0' as const;
 
 export interface DashboardRecordPatch<T extends { id: string }> {
   id: string;
@@ -15,8 +16,12 @@ export interface DashboardDraftState {
   schemaVersion: typeof DASHBOARD_DRAFT_SCHEMA_VERSION;
   flowPatches: Array<DashboardRecordPatch<GuidedFlow>>;
   educationMaterialPatches: Array<DashboardRecordPatch<EducationResource>>;
+  groupPatches: Array<DashboardRecordPatch<EducationResourceGroup>>;
   addedFlows: GuidedFlow[];
   addedEducationMaterials: EducationResource[];
+  addedGroups: EducationResourceGroup[];
+  defaultGroupOrder?: number;
+  removedGroupIds?: string[];
   updatedAt: string | null;
 }
 
@@ -25,8 +30,12 @@ export function createEmptyDashboardDraftState(): DashboardDraftState {
     schemaVersion: DASHBOARD_DRAFT_SCHEMA_VERSION,
     flowPatches: [],
     educationMaterialPatches: [],
+    groupPatches: [],
     addedFlows: [],
     addedEducationMaterials: [],
+    addedGroups: [],
+    defaultGroupOrder: 0,
+    removedGroupIds: [],
     updatedAt: null,
   };
 }
@@ -36,9 +45,23 @@ export function loadDashboardDrafts(storage: Storage = localStorage): DashboardD
   if (!raw) return createEmptyDashboardDraftState();
 
   try {
-    const parsed = JSON.parse(raw) as DashboardDraftState;
-    if (parsed.schemaVersion !== DASHBOARD_DRAFT_SCHEMA_VERSION) return createEmptyDashboardDraftState();
-    return parsed;
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed !== 'object' || parsed === null) return createEmptyDashboardDraftState();
+
+    const record = parsed as Record<string, unknown>;
+    const version = record.schemaVersion;
+    if (version === '1.0.0') {
+      return {
+        ...(record as Record<string, unknown>),
+        schemaVersion: DASHBOARD_DRAFT_SCHEMA_VERSION,
+        groupPatches: (record.groupPatches ?? []) as DashboardRecordPatch<EducationResourceGroup>[],
+        addedGroups: (record.addedGroups ?? []) as EducationResourceGroup[],
+        defaultGroupOrder: (record.defaultGroupOrder ?? 0) as number,
+        removedGroupIds: (record.removedGroupIds ?? []) as string[],
+      } as DashboardDraftState;
+    }
+    if (version !== DASHBOARD_DRAFT_SCHEMA_VERSION) return createEmptyDashboardDraftState();
+    return parsed as DashboardDraftState;
   } catch {
     return createEmptyDashboardDraftState();
   }
@@ -53,6 +76,11 @@ export function clearDashboardDrafts(storage: Storage = localStorage) {
 }
 
 export function mergeDashboardDrafts(shipped: DashboardShippedContent, drafts: DashboardDraftState) {
+  const removedGroupIds = new Set(drafts.removedGroupIds ?? []);
+  const educationGroups = mergeRecords(shipped.educationGroups, drafts.groupPatches, drafts.addedGroups).filter(
+    (group) => !removedGroupIds.has(group.id),
+  );
+
   return {
     flows: mergeRecords(shipped.flows, drafts.flowPatches, drafts.addedFlows),
     educationMaterials: mergeRecords(
@@ -60,7 +88,13 @@ export function mergeDashboardDrafts(shipped: DashboardShippedContent, drafts: D
       drafts.educationMaterialPatches,
       drafts.addedEducationMaterials,
     ),
+    educationGroups: sortGroupsByOrder(educationGroups),
+    defaultGroupOrder: drafts.defaultGroupOrder ?? 0,
   };
+}
+
+function sortGroupsByOrder(groups: EducationResourceGroup[]) {
+  return [...groups].sort((left, right) => left.order - right.order);
 }
 
 function mergeRecords<T extends { id: string }>(shipped: T[], patches: Array<DashboardRecordPatch<T>>, additions: T[]) {

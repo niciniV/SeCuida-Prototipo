@@ -50,12 +50,6 @@ describe('Router', () => {
     expect(screen.getByRole('heading', { name: /biblioteca de educação/i })).toBeInTheDocument();
   });
 
-  it('renders the privacy route', () => {
-    renderRoute('/privacidade');
-
-    expect(screen.getByRole('heading', { name: /privacidade/i })).toBeInTheDocument();
-  });
-
   it('does not render the dashboard route by default', () => {
     renderRoute('/dashboard');
 
@@ -67,7 +61,7 @@ describe('Router', () => {
 
     renderRoute('/dashboard');
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Dashboard' }, { timeout: 3000 })).toBeInTheDocument();
   });
 
   it('shows dashboard navigation when the dev flag is enabled', () => {

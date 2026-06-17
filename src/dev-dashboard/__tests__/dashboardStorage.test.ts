@@ -9,13 +9,18 @@ import {
   mergeDashboardDrafts,
   saveDashboardDrafts,
 } from '../draft-storage/dashboardStorage';
+import { getShippedDashboardContent } from '../content/shippedContent';
 
 const emptyDraft: DashboardDraftState = {
   schemaVersion: DASHBOARD_DRAFT_SCHEMA_VERSION,
   flowPatches: [],
   educationMaterialPatches: [],
+  groupPatches: [],
   addedFlows: [],
   addedEducationMaterials: [],
+  addedGroups: [],
+  defaultGroupOrder: 0,
+  removedGroupIds: [],
   updatedAt: '2026-05-22T00:00:00.000Z',
 };
 
@@ -29,8 +34,12 @@ describe('dashboardStorage', () => {
       schemaVersion: DASHBOARD_DRAFT_SCHEMA_VERSION,
       flowPatches: [],
       educationMaterialPatches: [],
+      groupPatches: [],
       addedFlows: [],
       addedEducationMaterials: [],
+      addedGroups: [],
+      defaultGroupOrder: 0,
+      removedGroupIds: [],
       updatedAt: null,
     });
   });
@@ -56,10 +65,39 @@ describe('dashboardStorage', () => {
       flowPatches: [{ id: 'flow-one', sourceIndex: 0, patch: { title: 'Edited flow' } }],
     };
 
-    expect(mergeDashboardDrafts({ flows: [shippedFlow], educationMaterials: [shippedMaterial] }, draft)).toEqual({
+    expect(
+      mergeDashboardDrafts({ flows: [shippedFlow], educationMaterials: [shippedMaterial], educationGroups: [] }, draft),
+    ).toEqual({
       flows: [{ ...shippedFlow, title: 'Edited flow' }],
       educationMaterials: [shippedMaterial],
+      educationGroups: [],
+      defaultGroupOrder: 0,
     });
+  });
+
+  it('filters removed education groups after merge', () => {
+    const shippedGroup = { id: 'group-one', title: 'Group one', order: 1 };
+    const keptGroup = { id: 'group-two', title: 'Group two', order: 2 };
+    const draft = {
+      ...emptyDraft,
+      removedGroupIds: ['group-one'],
+    };
+
+    expect(
+      mergeDashboardDrafts({ flows: [], educationMaterials: [], educationGroups: [shippedGroup, keptGroup] }, draft)
+        .educationGroups,
+    ).toEqual([keptGroup]);
+  });
+
+  it('preserves the default group order when merging drafts', () => {
+    const draft = {
+      ...emptyDraft,
+      defaultGroupOrder: 2,
+    };
+
+    expect(
+      mergeDashboardDrafts({ flows: [], educationMaterials: [], educationGroups: [] }, draft).defaultGroupOrder,
+    ).toBe(2);
   });
 
   it('keeps duplicate IDs isolated by source index while editing', () => {
@@ -70,10 +108,10 @@ describe('dashboardStorage', () => {
       flowPatches: [{ id: 'duplicate-flow', sourceIndex: 1, patch: { title: 'Edited second flow' } }],
     };
 
-    expect(mergeDashboardDrafts({ flows: [firstFlow, secondFlow], educationMaterials: [] }, draft).flows).toEqual([
-      firstFlow,
-      { ...secondFlow, title: 'Edited second flow' },
-    ]);
+    expect(
+      mergeDashboardDrafts({ flows: [firstFlow, secondFlow], educationMaterials: [], educationGroups: [] }, draft)
+        .flows,
+    ).toEqual([firstFlow, { ...secondFlow, title: 'Edited second flow' }]);
   });
 
   it('applies legacy patches without source index to the first matching shipped record', () => {
@@ -84,9 +122,69 @@ describe('dashboardStorage', () => {
       flowPatches: [{ id: 'legacy-flow', patch: { title: 'Legacy edited flow' } }],
     };
 
-    expect(mergeDashboardDrafts({ flows: [firstFlow, secondFlow], educationMaterials: [] }, draft).flows).toEqual([
-      { ...firstFlow, title: 'Legacy edited flow' },
-      secondFlow,
-    ]);
+    expect(
+      mergeDashboardDrafts({ flows: [firstFlow, secondFlow], educationMaterials: [], educationGroups: [] }, draft)
+        .flows,
+    ).toEqual([{ ...firstFlow, title: 'Legacy edited flow' }, secondFlow]);
+  });
+
+  it('includes educationGroups in shipped content', () => {
+    const shipped = getShippedDashboardContent();
+    expect(shipped.educationGroups).toBeDefined();
+    expect(shipped.educationGroups.length).toBeGreaterThan(0);
+  });
+
+  it('includes groupPatches and addedGroups in draft state', () => {
+    const draft = loadDashboardDrafts();
+    expect(draft.groupPatches).toEqual([]);
+    expect(draft.addedGroups).toEqual([]);
+    expect(draft.defaultGroupOrder).toBe(0);
+    expect(draft.removedGroupIds).toEqual([]);
+  });
+
+  it('migrates v1 localStorage value to v2 preserving existing fields', () => {
+    const v1Draft = {
+      schemaVersion: '1.0.0',
+      flowPatches: [{ id: 'flow-one', sourceIndex: 0, patch: { title: 'Edited' } }],
+      educationMaterialPatches: [],
+      addedFlows: [],
+      addedEducationMaterials: [],
+      updatedAt: '2026-05-22T00:00:00.000Z',
+    };
+    localStorage.setItem('secuida:dev-dashboard:drafts:v1', JSON.stringify(v1Draft));
+
+    const loaded = loadDashboardDrafts();
+
+    expect(loaded.schemaVersion).toBe(DASHBOARD_DRAFT_SCHEMA_VERSION);
+    expect(loaded.flowPatches).toEqual(v1Draft.flowPatches);
+    expect(loaded.educationMaterialPatches).toEqual(v1Draft.educationMaterialPatches);
+    expect(loaded.addedFlows).toEqual(v1Draft.addedFlows);
+    expect(loaded.addedEducationMaterials).toEqual(v1Draft.addedEducationMaterials);
+    expect(loaded.updatedAt).toBe(v1Draft.updatedAt);
+    expect(loaded.groupPatches).toEqual([]);
+    expect(loaded.addedGroups).toEqual([]);
+    expect(loaded.defaultGroupOrder).toBe(0);
+    expect(loaded.removedGroupIds).toEqual([]);
+  });
+
+  it('resets to empty v2 draft for unknown schema version', () => {
+    const unknownDraft = {
+      schemaVersion: '0.0.0',
+      flowPatches: [{ id: 'flow-one', sourceIndex: 0, patch: { title: 'Edited' } }],
+      educationMaterialPatches: [],
+      addedFlows: [],
+      addedEducationMaterials: [],
+      updatedAt: '2026-05-22T00:00:00.000Z',
+    };
+    localStorage.setItem('secuida:dev-dashboard:drafts:v1', JSON.stringify(unknownDraft));
+
+    const loaded = loadDashboardDrafts();
+
+    expect(loaded.schemaVersion).toBe(DASHBOARD_DRAFT_SCHEMA_VERSION);
+    expect(loaded.flowPatches).toEqual([]);
+    expect(loaded.addedGroups).toEqual([]);
+    expect(loaded.defaultGroupOrder).toBe(0);
+    expect(loaded.removedGroupIds).toEqual([]);
+    expect(loaded.updatedAt).toBeNull();
   });
 });
