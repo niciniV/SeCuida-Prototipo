@@ -20,3 +20,31 @@ export function acceptImageTypes(): string {
 export function isImageFile(file: File): boolean {
   return file.type.startsWith('image/');
 }
+
+export function parseImageDataUrl(value: string | undefined): { mimeType: string; data: Uint8Array } | null {
+  if (!value) return null;
+
+  const match = value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/]+={0,2})$/);
+  if (!match) return null;
+
+  const mimeType = match[1] ?? '';
+  if (!acceptImageTypes().split(',').includes(mimeType)) return null;
+
+  try {
+    const base64 = match[2] ?? '';
+    if (base64.length % 4 !== 0) return null;
+
+    const binary = atob(base64);
+    const data = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      data[i] = binary.charCodeAt(i);
+    }
+    return { mimeType, data };
+  } catch {
+    return null;
+  }
+}
+
+export function isImageDataUrl(value: string | undefined): value is string {
+  return parseImageDataUrl(value) !== null;
+}

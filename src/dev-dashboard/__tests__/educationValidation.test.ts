@@ -89,6 +89,44 @@ describe('validateDashboardEducation', () => {
     );
   });
 
+  it('accepts uploaded thumbnail, featured image, and body image data URLs', () => {
+    const result = validateDashboardEducation(
+      [
+        {
+          ...baseResource,
+          imageUrl: 'data:image/png;base64,AAAA',
+          featuredImage: { kind: 'uploaded', dataUrl: 'data:image/png;base64,BBBB', fileName: 'main.png' },
+          body: [{ id: 'image-one', kind: 'image', imageUrl: 'data:image/png;base64,CCCC', imageFileName: 'body.png' }],
+        },
+      ],
+      [],
+    );
+
+    expect(result.errors).toEqual([]);
+  });
+
+  it('rejects corrupt uploaded image data URLs', () => {
+    const result = validateDashboardEducation(
+      [
+        {
+          ...baseResource,
+          imageUrl: 'data:text/plain;base64,AAAA',
+          featuredImage: { kind: 'uploaded', dataUrl: 'data:image/png;base64,not-valid-base64%%' },
+          body: [{ id: 'image-one', kind: 'image', imageUrl: 'data:image/png;base64,also-invalid%%' }],
+        },
+      ],
+      [],
+    );
+
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'invalid-thumbnail-image:resource-one' }),
+        expect.objectContaining({ id: 'invalid-uploaded-featured-image:resource-one' }),
+        expect.objectContaining({ id: 'invalid-body-image-url:resource-one:image-one' }),
+      ]),
+    );
+  });
+
   it('rejects empty paragraph body blocks', () => {
     const result = validateDashboardEducation(
       [{ ...baseResource, body: [{ id: 'overview', kind: 'paragraph', text: '   ' }] }],

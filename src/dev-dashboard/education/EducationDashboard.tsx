@@ -249,6 +249,20 @@ export function EducationDashboard({
                     Enviar imagem
                   </label>
                 </div>
+                {selectedResource.imageUrl ? (
+                  <div className="h-32 w-full overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low">
+                    <img
+                      alt="Miniatura da biblioteca"
+                      className="h-full w-full object-cover"
+                      src={selectedResource.imageUrl}
+                    />
+                  </div>
+                ) : null}
+                {selectedResource.imageFileName ? (
+                  <p className="font-label-sm text-on-surface-variant">
+                    Arquivo enviado: {selectedResource.imageFileName}
+                  </p>
+                ) : null}
               </Field>
 
               <fieldset
@@ -343,6 +357,9 @@ export function EducationDashboard({
                     ) : (
                       <p className="font-body-md text-on-surface-variant">Nenhuma imagem selecionada.</p>
                     )}
+                    {featuredImage.fileName ? (
+                      <p className="font-label-sm text-on-surface-variant">Arquivo enviado: {featuredImage.fileName}</p>
+                    ) : null}
                     <Field label="Descrição da imagem (acessibilidade)">
                       <input
                         aria-label="Descrição da imagem principal"
@@ -370,6 +387,15 @@ export function EducationDashboard({
                       value={featuredImage.kind === 'external' ? featuredImage.imageUrl : ''}
                       onChange={(event) => updateFeaturedImage({ kind: 'external', imageUrl: event.target.value })}
                     />
+                    {featuredImage.kind === 'external' && featuredImage.imageUrl ? (
+                      <div className="mt-3 h-48 w-full overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low">
+                        <img
+                          alt={featuredImage.alt ?? ''}
+                          className="h-full w-full object-cover"
+                          src={featuredImage.imageUrl}
+                        />
+                      </div>
+                    ) : null}
                   </Field>
                 )}
               </fieldset>
@@ -616,7 +642,7 @@ function createBodyBlock(kind: EducationResourceBlock['kind'], existingCount: nu
 
   if (kind === 'heading') return { id, kind, text: 'Novo título' };
   if (kind === 'list') return { id, kind, title: 'Nova lista', items: ['Novo item'] };
-  if (kind === 'image') return { id, kind, imageUrl: 'https://example.com/image.jpg', alt: '' };
+  if (kind === 'image') return { id, kind, imageUrl: '', alt: '' };
   if (kind === 'video') return { id, kind, title: 'Novo vídeo', url: 'https://www.youtube.com/watch?v=abcdef12345' };
   if (kind === 'sourceLink') return { id, kind, label: 'Acessar fonte original', url: 'https://example.com' };
 
@@ -735,10 +761,13 @@ function BlockFields({
           />
           {block.imageUrl ? 'Trocar imagem do bloco' : 'Enviar imagem do bloco'}
         </label>
-        {block.imageUrl && block.imageUrl.startsWith('data:') ? (
+        {block.imageUrl ? (
           <div className="h-40 w-full overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low">
             <img alt={block.alt ?? ''} className="h-full w-full object-cover" src={block.imageUrl} />
           </div>
+        ) : null}
+        {block.imageFileName ? (
+          <p className="font-label-sm text-on-surface-variant">Arquivo enviado: {block.imageFileName}</p>
         ) : null}
         <label className="flex flex-col gap-2">
           <span className="font-label-md text-on-surface">Descrição da imagem do bloco {blockNumber}</span>

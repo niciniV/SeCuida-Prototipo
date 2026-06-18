@@ -99,8 +99,20 @@ describe('Resources content', () => {
   it('seeds education resources with detail preview fields', () => {
     const resource = resourcesContent.resources[0];
 
+    expect(resource.imageUrl).not.toContain('googleusercontent.com');
     expect(resource.featuredImage).toEqual({ kind: 'catalog', imageId: 'hands-holding-plant' });
     expect(resource.body?.map((block) => block.kind)).toEqual(['paragraph', 'video', 'paragraph', 'sourceLink']);
+  });
+
+  it('includes generated resources and lets them override base resource IDs', async () => {
+    const generatedModule = await import('../resources/generated-resources');
+    const generatedIds = generatedModule.generatedResources.map((resource) => resource.id);
+
+    generatedIds.forEach((id) => {
+      const matches = resourcesContent.resources.filter((resource) => resource.id === id);
+      expect(matches).toHaveLength(1);
+      expect(matches[0]).toEqual(generatedModule.generatedResources.find((resource) => resource.id === id));
+    });
   });
 });
 

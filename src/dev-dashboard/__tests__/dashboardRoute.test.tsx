@@ -551,6 +551,81 @@ describe('DashboardRoute', () => {
     expect(screen.getByDisplayValue('https://www.youtube.com/watch?v=abcdef12345')).toBeInTheDocument();
   });
 
+  it('adds body image blocks without placeholder URLs and previews URL images', () => {
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
+    fireEvent.change(screen.getByLabelText('Tipo do novo bloco'), { target: { value: 'image' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar bloco' }));
+
+    expect(screen.getByLabelText('URL da imagem do bloco 2')).toHaveValue('');
+
+    fireEvent.change(screen.getByLabelText('URL da imagem do bloco 2'), {
+      target: { value: 'https://example.com/body.jpg' },
+    });
+    fireEvent.change(screen.getByLabelText('Descrição da imagem do bloco 2'), {
+      target: { value: 'Imagem do bloco' },
+    });
+
+    expect(screen.getByRole('img', { name: 'Imagem do bloco' })).toHaveAttribute('src', 'https://example.com/body.jpg');
+  });
+
+  it('shows previews and file names for material image fields', () => {
+    render(
+      <EducationDashboard
+        resources={[
+          {
+            id: 'mock-material',
+            title: 'Material de teste',
+            source: 'Equipe SeCuida',
+            description: 'Descrição do material.',
+            imageUrl: 'data:image/png;base64,AAAA',
+            imageFileName: 'thumb.png',
+            featuredImage: {
+              kind: 'uploaded',
+              dataUrl: 'data:image/png;base64,BBBB',
+              fileName: 'featured.png',
+              alt: 'Imagem principal',
+            },
+            body: [
+              {
+                id: 'body-image',
+                kind: 'image',
+                imageUrl: 'data:image/png;base64,CCCC',
+                imageFileName: 'body.png',
+                alt: 'Imagem interna',
+              },
+            ],
+            tags: ['teste'],
+            audience: 'teachers',
+            review: { status: 'pending_review', reviewedBy: null, reviewedAt: null, notes: '' },
+          },
+        ]}
+        groups={[]}
+        onResourceChange={vi.fn()}
+        onResourceAdd={vi.fn()}
+        onGroupChange={vi.fn()}
+        onGroupAdd={vi.fn()}
+        onGroupRemove={vi.fn()}
+        onGroupMove={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'Miniatura da biblioteca' })).toHaveAttribute(
+      'src',
+      'data:image/png;base64,AAAA',
+    );
+    expect(screen.getByText('Arquivo enviado: thumb.png')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Imagem principal' })).toHaveAttribute('src', 'data:image/png;base64,BBBB');
+    expect(screen.getByText('Arquivo enviado: featured.png')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Imagem interna' })).toHaveAttribute('src', 'data:image/png;base64,CCCC');
+    expect(screen.getByText('Arquivo enviado: body.png')).toBeInTheDocument();
+  });
+
   it('keeps focus while editing a material body block', async () => {
     const user = userEvent.setup();
 

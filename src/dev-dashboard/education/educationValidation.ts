@@ -2,6 +2,7 @@ import type { EducationResource } from '../../domain/resources/types';
 import type { EducationResourceGroup } from '../../content/resources/groups';
 import { DEFAULT_EDUCATION_GROUP_ID } from '../../content/resources/groups';
 import { findFeaturedImageOption } from '../../content/resources/featuredImages';
+import { isImageDataUrl } from '../components/fileUpload';
 import { createValidationResult, type DashboardValidationIssue } from '../validation/validationTypes';
 import { findDuplicateIds } from '../validation/duplicateIds';
 
@@ -23,6 +24,16 @@ export function validateDashboardEducation(resources: EducationResource[], group
     if (!resource.title.trim()) pushMissing(issues, resource.id, 'title', 'O título é obrigatório.');
     if (!resource.source.trim()) pushMissing(issues, resource.id, 'source', 'A fonte é obrigatória.');
     if (!resource.description.trim()) pushMissing(issues, resource.id, 'description', 'A descrição é obrigatória.');
+
+    if (resource.imageUrl && !isValidImageUrl(resource.imageUrl)) {
+      issues.push({
+        level: 'error',
+        area: 'education',
+        id: `invalid-thumbnail-image:${resource.id}`,
+        message: 'A miniatura da biblioteca precisa ser um link http://, https:// ou um arquivo enviado.',
+        path: `${resource.id}.imageUrl`,
+      });
+    }
 
     if (resource.tags.length === 0) {
       issues.push({
@@ -64,7 +75,7 @@ export function validateDashboardEducation(resources: EducationResource[], group
         });
       }
     } else if (resource.featuredImage.kind === 'uploaded') {
-      if (!isDataUrl(resource.featuredImage.dataUrl)) {
+      if (!isImageDataUrl(resource.featuredImage.dataUrl)) {
         issues.push({
           level: 'error',
           area: 'education',
@@ -200,10 +211,6 @@ function isHttpUrl(value: string) {
   }
 }
 
-function isDataUrl(value: string) {
-  return value.startsWith('data:');
-}
-
 function isValidImageUrl(value: string) {
-  return isHttpUrl(value) || isDataUrl(value);
+  return isHttpUrl(value) || isImageDataUrl(value);
 }
