@@ -169,7 +169,7 @@ function validateEffect(flowLabel: string, optionId: string, effect: FlowEffect,
       !['/apoio', '/contatos', '/educacao'].includes(String(effect.destination))
     ) {
       errors.push(
-        `Flow ${flowLabel} option ${optionId} deferred safety effect must include flagKey, message, and a supported destination.`,
+        `Flow ${flowLabel} option ${optionId} deferred safety effect must include flagKey, message, and supported destination.`,
       );
     }
     return;

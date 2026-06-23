@@ -322,6 +322,39 @@ describe('validateFlow', () => {
     );
   });
 
+  it('validates deferred safety effects', () => {
+    const invalidFlow: GuidedFlow = {
+      ...validFlow,
+      nodes: {
+        start: {
+          id: 'start',
+          kind: 'choice',
+          text: 'Você precisa de apoio?',
+          options: [
+            {
+              id: 'yes',
+              label: 'Sim',
+              next: 'end',
+              effects: [
+                {
+                  kind: 'deferred_safety',
+                  flagKey: '',
+                  message: '',
+                  destination: '/privacidade' as '/apoio',
+                },
+              ],
+            },
+          ],
+        },
+        end: { id: 'end', kind: 'result', text: 'Fim.' },
+      },
+    };
+
+    expect(validateFlow(invalidFlow).errors).toContain(
+      'Flow fixture-flow option yes deferred safety effect must include flagKey, message, and supported destination.',
+    );
+  });
+
   it('rejects malformed flow_start and navigate effects', () => {
     const invalidFlow = {
       ...validFlow,
