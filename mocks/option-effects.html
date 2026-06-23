@@ -8,6 +8,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./mock-styles.css" />
+  <style>
+    .optional-effect {
+      border-top: 1px dashed var(--color-outline-variant);
+      padding-top: 12px;
+    }
+    .optional-effect summary {
+      list-style: none;
+      cursor: pointer;
+    }
+    .optional-effect summary::-webkit-details-marker { display: none; }
+    .optional-effect-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .optional-effect[open] .optional-effect-chevron { transform: rotate(180deg); }
+    .optional-effect-chevron { transition: transform .15s ease; }
+  </style>
 </head>
 <body>
 <div class="mock-shell">
@@ -26,8 +45,8 @@
   <div>
     <h1 class="font-headline-sm" style="font-size:24px">Editor de opções · efeitos &amp; redirecionamentos</h1>
     <p class="font-body-md text-muted" style="margin-top:4px">
-      Hoje o editor só oferece "Ir para etapa" e "Começar outro fluxo". Esta é a UI para os <strong>5 tipos de ação</strong> que o motor já suporta.
-      Use o seletor <em>"Ação principal"</em> abaixo para alternar entre os formulários.
+      Hoje o editor só oferece "Ir para etapa" e "Começar outro fluxo". Esta é a UI para os redirecionamentos que o motor já suporta
+      e para o novo caso do SRQ-20: <strong>marcar segurança agora, mas encaminhar ao apoio só depois do resultado final</strong>.
     </p>
   </div>
 
@@ -56,32 +75,33 @@
       <!-- ============ EFFECT / REDIRECT BLOCK ============ -->
       <div class="effect-card">
         <div class="row" style="gap:8px">
-          <span class="pill pill-primary">↪ Redirecionamento</span>
-          <span class="field-hint">O que acontece quando a pessoa escolhe esta opção</span>
+          <span class="pill pill-primary">↪ Ação principal</span>
+          <span class="field-hint">Primeiro, a pessoa continua para a próxima etapa</span>
         </div>
 
-        <!-- ACTION SELECTOR — toggles the 5 forms -->
+        <!-- ACTION SELECTOR — toggles the primary action forms -->
         <div class="field">
           <span class="field-label">Ação principal</span>
           <select class="inp-sm" id="action-select" onchange="showAction()">
-            <option value="next">Ir para a próxima etapa</option>
+            <option value="next" selected>Ir para a próxima etapa</option>
             <option value="flow_start">Começar outro fluxo</option>
             <option value="navigate">Navegar para uma tela (Apoio, Contatos, Educação)</option>
             <option value="end_flow">Encerrar a conversa com uma mensagem</option>
-            <option value="safety" selected>⚠️ Interrupção de segurança (levar ao apoio)</option>
+            <option value="safety">⚠️ Interrupção de segurança imediata</option>
           </select>
         </div>
 
         <!-- ── FORM: next ── -->
-        <div class="action-form" data-action="next" hidden>
+        <div class="action-form" data-action="next">
           <div class="field">
             <span class="field-label">Próxima etapa</span>
             <select class="inp-sm">
               <option>Etapa 2 — q1</option>
               <option>Etapa 3 — q2</option>
-              <option>Etapa 18 — q18</option>
+              <option selected>Etapa 18 — q18</option>
               <option>Resultado — declined-result</option>
             </select>
+            <span class="field-hint">Mesmo com a resposta sensível, o SRQ-20 continua até q20 e mostra o resultado calculado.</span>
           </div>
         </div>
 
@@ -121,8 +141,8 @@
           </div>
         </div>
 
-        <!-- ── FORM: safety_interrupt (the one SRQ-20 uses) ── -->
-        <div class="action-form" data-action="safety">
+        <!-- ── FORM: safety_interrupt (still available for immediate exits) ── -->
+        <div class="action-form" data-action="safety" hidden>
           <div class="field">
             <span class="field-label">Mensagem de acolhimento</span>
             <textarea class="inp" rows="2">Agradecemos sua coragem em responder com sinceridade. Pensamentos assim merecem atenção e acolhimento profissional. Vamos te direcionar para recursos de apoio imediato. Você não está sozinho(a).</textarea>
@@ -146,6 +166,47 @@
           </p>
         </div>
 
+        <!-- ============ DEFERRED SAFETY SECTION (new SRQ-20 behavior) ============ -->
+        <details class="optional-effect" open>
+          <summary class="row-between">
+            <div>
+              <span class="field-label">Encaminhamento de segurança (opcional)</span>
+              <p class="field-hint" style="margin:2px 0 0">Configurado nesta opção: marca um cuidado obrigatório e encaminha ao final do questionário.</p>
+            </div>
+            <div class="row">
+              <span class="pill pill-error">⚠ Ao final</span>
+              <svg class="optional-effect-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </summary>
+          <div class="optional-effect-body">
+            <div class="grid-2">
+              <div class="field">
+                <span class="field-label">Identificador do sinal</span>
+                <input class="inp-sm" value="self_harm_ideation" />
+              </div>
+              <div class="field">
+                <span class="field-label">Quando encaminhar</span>
+                <select class="inp-sm">
+                  <option selected>Depois do resultado final</option>
+                  <option>Imediatamente</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <span class="field-label">Mensagem antes do apoio</span>
+              <textarea class="inp" rows="2">Obrigado por responder com sinceridade. Como você marcou um sinal que merece cuidado imediato, vamos abrir a página de apoio agora. Você não está sozinho(a).</textarea>
+              <span class="field-hint">Aparece depois do resultado do SRQ-20, antes de levar a pessoa para /apoio.</span>
+            </div>
+            <div class="field">
+              <span class="field-label">Destino</span>
+              <select class="inp-sm">
+                <option selected>/apoio — Apoio imediato</option>
+                <option>/contatos — Contatos de apoio</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
         <!-- ============ SCORE SECTION (only shown when the flow has declared scores) ============ -->
         <div style="border-top:1px dashed var(--color-outline-variant); padding-top:12px; display:flex; flex-direction:column; gap:8px">
           <div class="row-between">
@@ -155,18 +216,10 @@
               Adicionar pontuação
             </button>
           </div>
-          <div class="row" style="gap:8px">
-            <select class="inp-sm" style="max-width:240px">
-              <option>Sofrimento (SRQ-20) · srq20</option>
-            </select>
-            <select class="inp-sm" style="max-width:110px">
-              <option>+1</option>
-              <option>+2</option>
-              <option>−1</option>
-            </select>
-            <button class="btn btn-danger btn-sm" type="button">Remover</button>
+          <div class="empty-state" style="padding:12px">
+            Q17 não soma pontos no SRQ-20. Ela fica separada da pontuação para não esconder uma regra de segurança dentro do cálculo.
           </div>
-          <span class="field-hint">Aparece somente porque este fluxo tem pontuação declarada. Fluxos sem pontuação não veem esta seção.</span>
+          <span class="field-hint">Q1–Q16 e Q18–Q20 usam esta seção para somar +1 em "srq20"; Q17 usa o encaminhamento de segurança acima.</span>
         </div>
       </div>
     </div>
@@ -183,8 +236,8 @@
       </div>
       <div class="effect-card">
         <div class="row" style="gap:8px">
-          <span class="pill pill-primary">↪ Redirecionamento</span>
-          <span class="field-hint">O que acontece quando a pessoa escolhe esta opção</span>
+          <span class="pill pill-primary">↪ Ação principal</span>
+          <span class="field-hint">Primeiro, a pessoa continua para a próxima etapa</span>
         </div>
         <div class="field">
           <span class="field-label">Ação principal</span>
@@ -193,15 +246,30 @@
             <option>Começar outro fluxo</option>
             <option>Navegar para uma tela (Apoio, Contatos, Educação)</option>
             <option>Encerrar a conversa com uma mensagem</option>
-            <option>⚠️ Interrupção de segurança (levar ao apoio)</option>
+            <option>⚠️ Interrupção de segurança imediata</option>
           </select>
         </div>
         <div class="field">
           <span class="field-label">Próxima etapa</span>
           <select class="inp-sm">
-            <option>Etapa 18 — q18</option>
+            <option selected>Etapa 18 — q18</option>
           </select>
         </div>
+        <details class="optional-effect">
+          <summary class="row-between">
+            <div>
+              <span class="field-label">Encaminhamento de segurança (opcional)</span>
+              <p class="field-hint" style="margin:2px 0 0">Desativado nesta opção. Expanda apenas quando a resposta exigir encaminhamento ao final.</p>
+            </div>
+            <div class="row">
+              <span class="btn btn-secondary btn-sm btn-wfit">Ativar</span>
+              <svg class="optional-effect-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </summary>
+          <div class="optional-effect-body">
+            <p class="field-hint">Ao ativar, aparecem os campos de identificador do sinal, mensagem e destino. Mantemos esta seção recolhida para não poluir opções comuns.</p>
+          </div>
+        </details>
       </div>
     </div>
 

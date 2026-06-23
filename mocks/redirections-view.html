@@ -90,29 +90,29 @@
 
       <div class="row-between">
         <div>
-          <h2 class="font-headline-sm">SRQ-20 · 5 redirecionamentos</h2>
-          <p class="field-hint">Tudo o que tira a pessoa do caminho linear de etapas.</p>
+          <h2 class="font-headline-sm">SRQ-20 · 5 itens auditáveis</h2>
+          <p class="field-hint">Pontuação, ramificações e encaminhamentos que precisam ficar visíveis para revisão.</p>
         </div>
         <button class="btn btn-secondary btn-sm" type="button">↻ Atualizar</button>
       </div>
 
-      <!-- SAFETY INTERRUPTS (most prominent, red) -->
+      <!-- DEFERRED SAFETY ROUTING (most prominent, red) -->
       <div class="redirect-group">
         <div class="row" style="gap:8px">
-          <span class="pill pill-error">⚠ Interrupções de segurança</span>
-          <span class="field-hint">Tiram a pessoa do fluxo imediatamente — revise com cuidado.</span>
+          <span class="pill pill-error">⚠ Encaminhamento de segurança ao final</span>
+          <span class="field-hint">Não interrompe q17: continua até q20, mostra o resultado e só então leva ao apoio.</span>
         </div>
 
         <div class="redirect-row danger">
           <div class="redirect-icon icon-safety">⚠</div>
           <div class="redirect-main">
-            <span class="redirect-origin">Etapa 18 · q17 → opção "Sim"</span>
-            <p class="font-body-md" style="margin:2px 0">"Agradecemos sua coragem em responder com sinceridade…"</p>
-            <span class="redirect-origin"><span class="redirect-arrow">→ leva a</span> <strong>/apoio</strong> · bloqueia retomar</span>
+            <span class="redirect-origin">Etapa 18 · q17 → opção "Sim" · sinal <strong>self_harm_ideation</strong></span>
+            <p class="font-body-md" style="margin:2px 0">"Obrigado por responder com sinceridade. Como você marcou um sinal que merece cuidado imediato…"</p>
+            <span class="redirect-origin"><span class="redirect-arrow">1.</span> continua para <strong>q18</strong> · <span class="redirect-arrow">2.</span> calcula resultado em <strong>srq20-score</strong> · <span class="redirect-arrow">3.</span> depois abre <strong>/apoio</strong></span>
           </div>
           <div class="redirect-actions">
             <button class="btn btn-secondary btn-sm" type="button">Editar etapa</button>
-            <button class="btn-link btn-link-error" type="button">Remover redirecionamento</button>
+            <button class="btn-link btn-link-error" type="button">Remover encaminhamento</button>
           </div>
         </div>
       </div>
@@ -165,7 +165,7 @@
       <div class="redirect-group">
         <div class="row" style="gap:8px">
           <span class="pill pill-secondary-container">↗ Navegações de tela</span>
-          <span class="field-hint">Levam a /apoio, /contatos ou /educacao.</span>
+          <span class="field-hint">Navegações imediatas para /apoio, /contatos ou /educacao.</span>
         </div>
         <div class="empty-state" style="padding:16px">
           Nenhuma navegação de tela neste fluxo.

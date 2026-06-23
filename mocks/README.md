@@ -16,16 +16,16 @@ e têm uma navegação no topo para pular entre os quatro.
 
 | # | Arquivo | O que mostra |
 |---|---------|--------------|
-| 1 | `option-effects.html` | Editor de opção cobrindo os **5 tipos de ação/redirecionamento** que o motor já suporta (`next`, `flow_start`, `navigate`, `end_flow`, `safety_interrupt`) + seção de pontuação. Hoje o editor só faz `next` e `flow_start`. |
+| 1 | `option-effects.html` | Editor de opção cobrindo os tipos de ação/redirecionamento que o motor já suporta (`next`, `flow_start`, `navigate`, `end_flow`, `safety_interrupt`) + o novo **encaminhamento de segurança ao final** para o SRQ-20 + seção de pontuação. Hoje o editor só faz `next` e `flow_start`. |
 | 2 | `score-declaration.html` | O painel **opt-in de pontuação** no topo do editor. Mostra os dois estados: desativado (work-stress, nada de score) e ativado (SRQ-20, com identificador / nome de exibição / pontuação máxima). |
-| 3 | `large-flow-nav.html` | Resposta ao "SRQ-20 é difícil de editar": contagem, **busca**, **filtros por tipo/redirecionamento**, **recolher/expandir tudo** e um **mini-outline lateral clicável** com badges. Renderiza as 22 etapas reais do SRQ-20. |
-| 4 | `redirections-view.html` | Nova aba **"Redirecionamentos"** listando, num só lugar, todos os redirecionamentos do fluxo (segurança, ramificação por pontuação, pontuações, navegações, inícios de fluxo, encerramentos) — cada item clicável leva à etapa de origem. Mostra também o estado vazio (work-stress). |
+| 3 | `large-flow-nav.html` | Resposta ao "SRQ-20 é difícil de editar": contagem, **busca**, **filtros por tipo/redirecionamento**, **recolher/expandir tudo** e um **mini-outline lateral clicável** com badges e prévias curtas de texto. Renderiza as perguntas, a ramificação de pontuação e os resultados finais do SRQ-20. |
+| 4 | `redirections-view.html` | Nova aba **"Redirecionamentos"** listando, num só lugar, todos os redirecionamentos e efeitos auditáveis do fluxo (encaminhamento de segurança ao final, ramificação por pontuação, pontuações, navegações, inícios de fluxo, encerramentos) — cada item clicável leva à etapa de origem. Mostra também o estado vazio (work-stress). |
 
 ## Contexto do plano
 
-- SRQ-20 (`src/content/flows/srq20.json`) é o único fluxo que usa `score`, `safety_interrupt` e
-  `score_branch` — todos definidos em `src/domain/flow-engine/types.ts` e avaliados em `advanceFlow.ts`,
-  mas **sem UI de criação/edição** hoje.
+- SRQ-20 (`src/content/flows/srq20.json`) é o único fluxo que usa `score`, segurança sensível e
+  `score_branch`. A regra desejada para Q17 é **diferente de uma interrupção imediata**: marcar um sinal de segurança,
+  continuar até o fim do questionário e encaminhar para `/apoio` depois do resultado final.
 - Outros fluxos (work-stress, rest-recovery, neutral) são árvores `choice → next → result`.
 - "Adicionar redirecionamentos a outros fluxos" = construir editores para esses capabilities,
   com pontuação **opt-in por fluxo** (declaração explícita).
