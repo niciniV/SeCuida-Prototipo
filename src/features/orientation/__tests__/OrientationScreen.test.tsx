@@ -1,6 +1,17 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mockNavigate = vi.hoisted(() => vi.fn());
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 import { OrientationScreen } from '../OrientationScreen';
 
 const TYPING_DELAY_MS = 1200;
@@ -32,6 +43,7 @@ function routeFromNeutralToWorkStress() {
 describe('OrientationScreen', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    mockNavigate.mockClear();
   });
 
   afterEach(() => {
@@ -389,5 +401,44 @@ describe('OrientationScreen', () => {
       screen.getByText('Antes de encerrar, você pode escolher com calma o que faz sentido agora.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Qual próximo passo você prefere?')).toBeInTheDocument();
+  });
+
+  it('continues SRQ-20 after Q17 yes and navigates to apoio only after the final result', () => {
+    renderOrientation();
+
+    startOrientationWithStarter();
+
+    fireEvent.change(screen.getByPlaceholderText('Digite ou escolha uma opção'), {
+      target: { value: 'SRQ-20' },
+    });
+    fireEvent.click(screen.getByRole('option', { name: 'Quero responder o SRQ-20' }));
+    advanceInitialLoad();
+
+    fireEvent.click(screen.getByRole('option', { name: 'Quero responder' }));
+    advanceInitialLoad();
+
+    fireEvent.click(screen.getByRole('option', { name: 'Continuar' }));
+    advanceInitialLoad();
+
+    for (let question = 1; question <= 16; question++) {
+      fireEvent.click(screen.getByRole('option', { name: 'Não' }));
+      advanceInitialLoad();
+    }
+
+    fireEvent.click(screen.getByRole('option', { name: 'Sim' }));
+    advanceInitialLoad();
+
+    expect(screen.getByText(/Sente-se cansado/i)).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalledWith('/apoio');
+
+    fireEvent.click(screen.getByRole('option', { name: 'Não' }));
+    advanceInitialLoad();
+    fireEvent.click(screen.getByRole('option', { name: 'Não' }));
+    advanceInitialLoad();
+    fireEvent.click(screen.getByRole('option', { name: 'Não' }));
+    advanceInitialLoad();
+
+    expect(screen.getByText(/Obrigado por responder com sinceridade/i)).toBeInTheDocument();
+    expect(mockNavigate).toHaveBeenCalledWith('/apoio');
   });
 });
