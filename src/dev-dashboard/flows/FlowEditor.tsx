@@ -436,9 +436,6 @@ export function FlowEditor({
             </p>
           )}
         </div>
-        <Button variant="secondary" onClick={addResultNode} className="w-fit">
-          Adicionar etapa
-        </Button>
       </section>
 
       {activeOptionEdit &&

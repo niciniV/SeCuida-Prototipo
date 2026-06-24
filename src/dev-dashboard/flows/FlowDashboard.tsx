@@ -56,6 +56,20 @@ export function FlowDashboard({
     );
   }
 
+  function addResultNode() {
+    const nodeId = createUniqueId('nova_etapa', selectedFlow.nodes);
+    const updatedNodes = {
+      ...selectedFlow.nodes,
+      [nodeId]: {
+        id: nodeId,
+        kind: 'result' as const,
+        text: 'Nova etapa final.',
+      },
+    };
+    onFlowChange(effectiveIndex, selectedFlow.id, { nodes: updatedNodes });
+    setSelectedNodeId(nodeId); // auto-select the new stage
+  }
+
   const visibleNodes = useMemo(() => {
     return nodes.filter((node) => {
       const normalizedSearch = nodeSearch.trim().toLocaleLowerCase('pt-BR');
@@ -258,6 +272,9 @@ export function FlowDashboard({
               {visibleNodes.map((node) => {
                 const isSelected = node.id === activeNodeId;
                 const nodeTitle = getFlowNodeTitle(node.id, nodes);
+                const hasScore = node.kind === 'choice' && node.options.some(opt => opt.effects?.some(eff => eff.kind === 'score'));
+                const hasSafety = node.kind === 'choice' && node.options.some(opt => opt.effects?.some(eff => eff.kind === 'deferred_safety'));
+                const hasHandoff = node.kind === 'choice' && node.options.some(opt => opt.effects?.some(eff => eff.kind === 'flow_start'));
                 return (
                   <button
                     key={node.id}
@@ -270,7 +287,14 @@ export function FlowDashboard({
                         : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
                     }`}
                   >
-                    <span className="block font-medium truncate">{node.id}</span>
+                    <div className="flex items-center justify-between gap-1 w-full min-w-0">
+                      <span className="block font-medium truncate">{node.id}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {hasScore && <span className="bg-secondary-container text-on-secondary-container px-1 py-0.5 rounded text-[10px] font-bold shrink-0 ml-1">+pts</span>}
+                        {hasSafety && <span className="bg-error-container text-error px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ml-1">⚠</span>}
+                        {hasHandoff && <span className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-[10px] font-bold shrink-0 ml-1">⇄</span>}
+                      </div>
+                    </div>
                     <span
                       className={`text-xs block truncate ${isSelected ? 'text-on-primary/80' : 'text-on-surface-variant'}`}
                     >
@@ -280,6 +304,9 @@ export function FlowDashboard({
                 );
               })}
             </div>
+            <Button variant="secondary" onClick={addResultNode} className="w-full mt-2">
+              Adicionar etapa
+            </Button>
           </div>
         )}
       </aside>
@@ -330,4 +357,11 @@ export function FlowDashboard({
       </div>
     </section>
   );
+}
+
+function createUniqueId(baseId: string, records: Record<string, unknown>) {
+  if (!records[baseId]) return baseId;
+  let index = 2;
+  while (records[`${baseId}_${index}`]) index += 1;
+  return `${baseId}_${index}`;
 }

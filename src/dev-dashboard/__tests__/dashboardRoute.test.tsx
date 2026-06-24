@@ -327,6 +327,8 @@ describe('DashboardRoute', () => {
       target: { value: 'Continuar editado' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar etapa' }));
+    // Since adding a stage auto-selects it, we select start (Etapa 1) again to edit options
+    fireEvent.click(screen.getByRole('button', { name: /start/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar opção na etapa 1' }));
 
     expect(screen.getByDisplayValue('Texto editado da etapa inicial')).toBeInTheDocument();
@@ -1235,5 +1237,31 @@ describe('DashboardRoute', () => {
     // Flow is gone
     expect(screen.queryByRole('button', { name: /^Fluxo de teste$/i })).not.toBeInTheDocument();
   });
+
+  it('renders visual effect badges in outline list and supports stage addition in sidebar', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
+    await user.click(screen.getByRole('button', { name: 'Editor' }));
+
+    // Stage q1 (Etapa 3 — q1) should show +pts badge
+    expect(screen.getAllByText('+pts')[0]).toBeInTheDocument();
+
+    // Stage q17 (Etapa 19 — q17) should show ⚠ badge
+    expect(screen.getByText('⚠')).toBeInTheDocument();
+
+    // Verify "+ Adicionar etapa" is visible in the sidebar stages area
+    const addStageBtn = screen.getByRole('button', { name: /Adicionar etapa/i });
+    expect(addStageBtn).toBeInTheDocument();
+
+    // Click it and verify a new node is created (will be named 'nova_etapa' or 'nova_etapa_x')
+    await user.click(addStageBtn);
+    expect(screen.getByRole('button', { name: /nova_etapa/i })).toBeInTheDocument();
+  });
 });
+
 
