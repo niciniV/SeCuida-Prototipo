@@ -121,7 +121,7 @@ describe('Flow registry', () => {
     const flows = flowRegistry.flows as import('../../domain/flow-engine/types').GuidedFlow[];
     const flowIds = flows.map((flow) => flow.id);
 
-    expect(flows).toHaveLength(8);
+    expect(flows).toHaveLength(9);
     expect(flowIds).toEqual(
       expect.arrayContaining([
         'orientation-understand-feelings',
@@ -132,6 +132,7 @@ describe('Flow registry', () => {
         'work-stress',
         'rest-recovery',
         'srq20',
+        'job-satisfaction',
       ]),
     );
     flows.forEach((flow) => {
