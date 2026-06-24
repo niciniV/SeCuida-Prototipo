@@ -143,7 +143,7 @@ function ChoiceOptionsSection({
               <div className="mt-1 flex flex-wrap gap-1">
                 {option.effects.map((effect, effectIndex) => {
                   const colorClass = effectColors[effect.kind] ?? 'bg-surface-container text-on-surface';
-                  const label = effectLabels[effect.kind]?.(effect as Record<string, unknown>) ?? effect.kind;
+                  const label = effectLabels[effect.kind]?.(effect as unknown as Record<string, unknown>) ?? effect.kind;
                   return (
                     <span
                       key={effectIndex}
@@ -187,7 +187,8 @@ function ScoreBranchSection({ node, nodes }: { node: ScoreBranchFlowNode; nodes:
         <tbody>
           {node.branches.map((branch) => (
             <tr key={branch.id} className="border-t border-outline-variant/30">
-              <td className="py-1 pr-2 font-mono">{branch.min} – {branch.max}</td>
+              <td className="py-1 pr-2 font-mono">{branch.min}</td>
+              <td className="py-1 pr-2 font-mono">{branch.max}</td>
               <td className="py-1 text-on-surface-variant">{getFlowNodeTitle(branch.next, nodes)}</td>
             </tr>
           ))}
