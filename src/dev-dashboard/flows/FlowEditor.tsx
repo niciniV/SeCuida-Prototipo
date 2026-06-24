@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { ChoiceFlowNode, FlowNode, GuidedFlow } from '../../domain/flow-engine/types';
 import { Button } from '../../design-system/components/Button';
@@ -6,6 +7,8 @@ import { FieldHint } from '../components/FieldHint';
 import { inputClass, inputClassSm, textareaClass } from '../components/fieldStyles';
 import { getFlowNodeLabel, getFlowNodeTitle } from './flowDisplay';
 import { flowPurposeLabels } from './flowLabels';
+
+type NodeFilter = 'all' | 'result' | 'safety' | 'branch';
 
 export function FlowEditor({
   flow,
@@ -22,6 +25,29 @@ export function FlowEditor({
 }) {
   const nodes = Object.values(flow.nodes);
   const firstNodeId = nodes[0]?.id ?? flow.entry.nodeId;
+  const [nodeSearch, setNodeSearch] = useState('');
+  const [activeNodeFilter, setActiveNodeFilter] = useState<NodeFilter>('all');
+
+  function nodeHasDeferredSafety(node: FlowNode) {
+    return (
+      node.kind === 'choice' &&
+      node.options.some((option) => option.effects?.some((effect) => effect.kind === 'deferred_safety'))
+    );
+  }
+
+  const visibleNodes = nodes.filter((node) => {
+    const normalizedSearch = nodeSearch.trim().toLocaleLowerCase('pt-BR');
+    const matchesSearch =
+      !normalizedSearch ||
+      node.id.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
+      node.text.toLocaleLowerCase('pt-BR').includes(normalizedSearch);
+
+    if (!matchesSearch) return false;
+    if (activeNodeFilter === 'result') return node.kind === 'result';
+    if (activeNodeFilter === 'branch') return node.kind === 'score_branch';
+    if (activeNodeFilter === 'safety') return nodeHasDeferredSafety(node);
+    return true;
+  });
 
   function isNodeExpanded(nodeId: string) {
     return Boolean(expandedNodeIds[`${flow.id}:${nodeId}`]);
@@ -206,8 +232,44 @@ export function FlowEditor({
       <section className="flex flex-col gap-stack-sm">
         <h3 className="font-headline-sm text-on-surface">Etapas</h3>
 
+        <div className="flex flex-col gap-2 rounded-lg border border-outline-variant/50 bg-surface-container-low p-3">
+          <input
+            aria-label="Buscar etapa"
+            className={inputClassSm}
+            placeholder="Buscar etapa..."
+            value={nodeSearch}
+            onChange={(event) => setNodeSearch(event.target.value)}
+          />
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ['all', 'Todas'],
+                ['result', 'Resultado'],
+                ['safety', 'Apoio ao final'],
+                ['branch', 'Ramificação'],
+              ] as Array<[NodeFilter, string]>
+            ).map(([filter, label]) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => setActiveNodeFilter(filter)}
+                className={`rounded-full px-3 py-1 font-label-sm ${
+                  activeNodeFilter === filter
+                    ? 'bg-secondary-container text-on-secondary-container'
+                    : 'bg-surface text-on-surface'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="font-body-sm text-on-surface-variant">
+            {visibleNodes.length} {visibleNodes.length === 1 ? 'etapa visível' : 'etapas visíveis'}
+          </p>
+        </div>
+
         <div className="flex flex-col gap-3">
-          {nodes.map((node) => {
+          {visibleNodes.map((node) => {
             const stepTitle = getFlowNodeTitle(node.id, nodes);
             const stepLabel = stepTitle.toLowerCase();
             const isExpanded = isNodeExpanded(node.id);
@@ -233,7 +295,7 @@ export function FlowEditor({
                   >
                     <span className="flex min-w-0 flex-1 flex-col gap-2">
                       <span className="flex flex-wrap items-center gap-2">
-                        <span className="font-label-lg text-on-surface">{stepTitle}</span>
+                        <span className="font-label-lg text-on-surface">{`${stepTitle} — ${node.id}`}</span>
                         <span className="rounded-full bg-surface-container-low px-3 py-1 font-label-sm text-on-surface-variant">
                           {getNodeKindLabel(node)}
                         </span>

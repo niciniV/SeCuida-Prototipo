@@ -55,6 +55,67 @@ vi.mock('../content/shippedContent', () => ({
           start: { id: 'start', kind: 'result', text: 'Este é outro fluxo.' },
         },
       },
+      {
+        id: 'mock-flow-srq20',
+        version: '1.0.0',
+        locale: 'pt-BR',
+        title: 'SRQ-20',
+        type: 'guided_conversation',
+        status: 'draft',
+        entry: {
+          nodeId: 'intro1',
+          enteringPhrases: ['Quero responder o SRQ-20'],
+          transitionMessage: 'Este é o SRQ-20.',
+        },
+        nodes: {
+          ...Object.fromEntries(
+            Array.from({ length: 17 }, (_, index) => {
+              const nodeId = `intro${index + 1}`;
+              const nextId = index === 16 ? 'q17' : `intro${index + 2}`;
+              return [
+                nodeId,
+                {
+                  id: nodeId,
+                  kind: 'choice',
+                  text: `Etapa introdutória ${index + 1}`,
+                  options: [{ id: 'next', label: 'Continuar', next: nextId }],
+                },
+              ];
+            }),
+          ),
+          q17: {
+            id: 'q17',
+            kind: 'choice',
+            text: 'Tem tido ideia de acabar com a vida?',
+            options: [
+              {
+                id: 'yes',
+                label: 'Sim',
+                next: 'q18',
+                effects: [
+                  {
+                    kind: 'deferred_safety',
+                    flagKey: 'self_harm_ideation',
+                    message: 'Apoio.',
+                    destination: '/apoio',
+                  },
+                ],
+              },
+              { id: 'no', label: 'Não', next: 'q18' },
+            ],
+          },
+          q18: {
+            id: 'q18',
+            kind: 'choice',
+            text: 'Sente-se cansado(a) o tempo todo?',
+            options: [
+              { id: 'yes', label: 'Sim', next: 'done' },
+              { id: 'no', label: 'Não', next: 'done' },
+            ],
+          },
+          done: { id: 'done', kind: 'result', text: 'Finalizado.' },
+        },
+      },
     ],
     educationMaterials: [
       {
@@ -192,7 +253,7 @@ describe('DashboardRoute', () => {
 
     expect(screen.getByDisplayValue('Texto editado da etapa inicial')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Continuar editado')).toBeInTheDocument();
-    expect(screen.getAllByText('Etapa 3').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Etapa 3/).length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue('Nova opção')).toBeInTheDocument();
   });
 
@@ -279,6 +340,18 @@ describe('DashboardRoute', () => {
     expect(screen.getByRole('button', { name: 'Editor' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByLabelText('Texto da etapa 1')).toBeInTheDocument();
     expect(screen.getByLabelText('Texto da opção 1 da etapa 1')).toBeInTheDocument();
+  });
+
+  it('filters large flow editor nodes by deferred safety marker', async () => {
+    const user = userEvent.setup();
+    render(<DashboardRoute />);
+
+    await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
+    await user.click(screen.getByRole('button', { name: 'Editor' }));
+    await user.click(screen.getByRole('button', { name: /Apoio ao final/i }));
+
+    expect(screen.getByText(/Etapa 18 — q17/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Etapa 19 — q18/i)).not.toBeInTheDocument();
   });
 
   it('clears the mock chat so a different path can be tested', () => {
