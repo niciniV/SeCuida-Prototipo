@@ -283,9 +283,7 @@ export function EducationDashboard({
                       checked={featuredImage.kind === 'uploaded'}
                       name="featured-image-kind"
                       type="radio"
-                      onChange={() =>
-                        updateFeaturedImage({ kind: 'uploaded', dataUrl: '', fileName: '' })
-                      }
+                      onChange={() => updateFeaturedImage({ kind: 'uploaded', dataUrl: '', fileName: '' })}
                     />
                     Enviar do computador
                   </label>
@@ -351,7 +349,12 @@ export function EducationDashboard({
                         className={inputClass}
                         value={featuredImage.alt ?? ''}
                         onChange={(event) =>
-                          updateFeaturedImage({ kind: 'uploaded', dataUrl: featuredImage.dataUrl, alt: event.target.value, fileName: featuredImage.fileName })
+                          updateFeaturedImage({
+                            kind: 'uploaded',
+                            dataUrl: featuredImage.dataUrl,
+                            alt: event.target.value,
+                            fileName: featuredImage.fileName,
+                          })
                         }
                       />
                     </Field>

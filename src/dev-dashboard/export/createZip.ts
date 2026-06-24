@@ -6,7 +6,7 @@ function makeCrc32Table(): number[] {
   for (let n = 0; n < 256; n++) {
     let c = n >>> 0;
     for (let k = 0; k < 8; k++) {
-      c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) >>> 0 : c >>> 1;
+      c = c & 1 ? (0xedb88320 ^ (c >>> 1)) >>> 0 : c >>> 1;
     }
     table[n] = c >>> 0;
   }
@@ -16,11 +16,11 @@ function makeCrc32Table(): number[] {
 const crc32Table = makeCrc32Table();
 
 function crc32(bytes: Uint8Array): number {
-  let c = (~0) >>> 0;
+  let c = ~0 >>> 0;
   for (let i = 0; i < bytes.length; i++) {
     c = (crc32Table[(c ^ bytes[i]) & 0xff] ^ (c >>> 1)) >>> 0;
   }
-  return (~c) >>> 0;
+  return ~c >>> 0;
 }
 
 function writeUInt32LE(buffer: Uint8Array, offset: number, value: number): void {
@@ -108,7 +108,8 @@ export function createZip(files: ZipFile[]): Uint8Array {
   writeUInt32LE(eocd, 16, centralDirOffset); // central directory offset
   writeUInt16LE(eocd, 20, 0); // comment length
 
-  const totalSize = localHeaders.reduce((sum, h, i) => sum + h.length + fileData[i].length, 0) + centralDirSize + eocd.length;
+  const totalSize =
+    localHeaders.reduce((sum, h, i) => sum + h.length + fileData[i].length, 0) + centralDirSize + eocd.length;
   const result = new Uint8Array(totalSize);
   let pos = 0;
 
