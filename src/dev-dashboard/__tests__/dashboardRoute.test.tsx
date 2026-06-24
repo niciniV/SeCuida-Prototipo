@@ -1306,6 +1306,35 @@ describe('DashboardRoute', () => {
     // Etapa 3 (q1) is deleted, now Etapa 3 becomes Q2
     expect(screen.queryByRole('heading', { name: /Etapa 3 — Você tem dores de cabeça frequentes\?/i })).not.toBeInTheDocument();
   });
+
+  it('dismisses drawer on backdrop click, auto-activates score, and displays score key description', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
+    await user.click(screen.getByRole('button', { name: 'Editor' }));
+    await user.click(screen.getByRole('button', { name: /Etapa 4/i })); // Q2 stage in the outline list
+
+    // Click option 1 actions to open drawer (Ações/Score button)
+    await user.click(screen.getAllByRole('button', { name: /Ações\/Score/i })[0]);
+
+    // Verify helper hint explaining what "Chave da pontuação" means
+    expect(screen.getByText(/A chave agrupa pontos do questionário/i)).toBeInTheDocument();
+
+    // Since flow SRQ-20 has active scoring, the score inputs should ALREADY be active/visible (no "Ativar pontuação" button)
+    expect(screen.getByLabelText('Chave da pontuação')).toBeInTheDocument();
+
+    // Click backdrop (the outer overlay with testid "drawer-backdrop") to close drawer
+    const backdrop = screen.getByTestId('drawer-backdrop');
+    await user.click(backdrop);
+
+    // Verify drawer is closed (Chave da pontuação is not in document anymore)
+    expect(screen.queryByLabelText('Chave da pontuação')).not.toBeInTheDocument();
+  });
 });
+
 
 

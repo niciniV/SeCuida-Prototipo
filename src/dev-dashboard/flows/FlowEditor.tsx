@@ -177,6 +177,26 @@ export function FlowEditor({
     });
   }
 
+  function handleOpenOptionEdit(node: ChoiceFlowNode, optionId: string) {
+    const option = node.options.find((opt) => opt.id === optionId);
+    if (option && existingScoreKeys.length > 0) {
+      const isSrq20Q17 = flow.id === 'srq20' && node.id === 'q17';
+      if (!isSrq20Q17) {
+        const hasScore = option.effects?.some((effect) => effect.kind === 'score');
+        if (!hasScore) {
+          // Auto-initialize score effect
+          const nextEffects = [
+            ...(option.effects ?? []),
+            { kind: 'score' as const, scoreKey: existingScoreKeys[0], value: 1 },
+          ];
+          updateChoiceOption(node, optionId, { effects: nextEffects });
+        }
+      }
+    }
+    setActiveOptionEdit({ nodeId: node.id, optionId });
+  }
+
+
   function addResultNode() {
     const nodeId = createUniqueId('nova_etapa', flow.nodes);
     onChange({
@@ -470,7 +490,7 @@ export function FlowEditor({
                                 <Button
                                   type="button"
                                   variant="secondary"
-                                  onClick={() => setActiveOptionEdit({ nodeId: node.id, optionId: option.id })}
+                                  onClick={() => handleOpenOptionEdit(node, option.id)}
                                   aria-label={`Ações/Score da opção ${optionIndex + 1} da ${stepLabel}`}
                                 >
                                   Ações/Score ⚙️
@@ -538,8 +558,15 @@ export function FlowEditor({
           const safetyEffect = getDeferredSafetyEffect(editOption);
 
           return (
-            <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm">
-              <div className="h-full w-full max-w-md overflow-y-auto bg-surface-container-lowest p-6 shadow-2xl flex flex-col gap-4 border-l border-outline-variant">
+            <div
+              data-testid="drawer-backdrop"
+              className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm"
+              onClick={() => setActiveOptionEdit(null)}
+            >
+              <div
+                className="h-full w-full max-w-md overflow-y-auto bg-surface-container-lowest p-6 shadow-2xl flex flex-col gap-4 border-l border-outline-variant"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="flex items-center justify-between border-b border-outline-variant/60 pb-3">
                   <h3 className="font-headline-sm text-on-surface font-semibold">Configurações Avançadas</h3>
                   <button
@@ -634,12 +661,13 @@ export function FlowEditor({
                             value={scoreEffect.scoreKey}
                             onChange={(event) =>
                               updateOptionEffects(editNode as ChoiceFlowNode, editOption.id, (effects) =>
-                                effects?.map((effect) =>
+                                 effects?.map((effect) =>
                                   effect.kind === 'score' ? { ...effect, scoreKey: event.target.value } : effect,
                                 ),
                               )
                             }
                           />
+                          <FieldHint>A chave agrupa pontos do questionário (ex: 'srq20' para somar todas as respostas Sim).</FieldHint>
                         </label>
                         <label className="flex flex-col gap-1">
                           <span className="font-label-sm text-on-surface">Valor</span>
