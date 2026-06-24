@@ -75,7 +75,15 @@ export function validateDashboardEducation(resources: EducationResource[], group
         });
       }
     } else if (resource.featuredImage.kind === 'uploaded') {
-      if (!isImageDataUrl(resource.featuredImage.dataUrl)) {
+      if (!resource.featuredImage.dataUrl.trim()) {
+        issues.push({
+          level: 'error',
+          area: 'education',
+          id: `missing-uploaded-featured-image:${resource.id}`,
+          message: 'Escolha uma imagem principal do computador ou use outra opção de imagem.',
+          path: `${resource.id}.featuredImage.dataUrl`,
+        });
+      } else if (!isValidImageUrl(resource.featuredImage.dataUrl)) {
         issues.push({
           level: 'error',
           area: 'education',
@@ -212,5 +220,10 @@ function isHttpUrl(value: string) {
 }
 
 function isValidImageUrl(value: string) {
-  return isHttpUrl(value) || isImageDataUrl(value);
+  return isRelativeImagePath(value) || isHttpUrl(value) || isImageDataUrl(value);
+}
+
+function isRelativeImagePath(value: string) {
+  const trimmedValue = value.trim();
+  return (trimmedValue.startsWith('/') && !trimmedValue.startsWith('//')) || trimmedValue.startsWith('./');
 }

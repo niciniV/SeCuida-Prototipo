@@ -349,6 +349,7 @@ export function FlowDashboard({
 
         {activeDetailTab === 'map' && (
           <FlowMap
+            key={selectedFlow.id}
             flow={selectedFlow}
             flows={flows}
             onFlowChange={(patch) => onFlowChange(effectiveIndex, selectedFlow.id, patch)}

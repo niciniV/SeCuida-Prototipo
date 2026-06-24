@@ -40,10 +40,10 @@ function ChoiceNodeComponent({ data }: { data: FlowNodeData }) {
   return (
     <div
       style={{ border: `2px solid ${colors.border}`, background: colors.bg, color: colors.text }}
-      className="min-w-[160px] max-w-[220px] rounded-lg px-3 py-2 text-sm shadow-sm"
+      className="min-w-[160px] max-w-[220px] overflow-hidden rounded-lg px-3 py-2 text-sm shadow-sm"
     >
       <div className="flex items-start justify-between gap-1">
-        <p className="font-medium leading-tight">{node.text.slice(0, 80)}{node.text.length > 80 ? '…' : ''}</p>
+        <p className="break-all font-medium leading-tight">{node.text.slice(0, 80)}{node.text.length > 80 ? '…' : ''}</p>
         {hasScore && (
           <span className="ml-1 shrink-0 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-800">+pts</span>
         )}
@@ -60,11 +60,11 @@ function ScoreBranchNodeComponent({ data }: { data: FlowNodeData }) {
   return (
     <div
       style={{ border: '2px solid #7a5900', background: '#ffdf9e', color: '#5c4300' }}
-      className="min-w-[160px] max-w-[220px] rounded-lg px-3 py-2 text-sm shadow-sm"
+      className="min-w-[160px] max-w-[220px] overflow-hidden rounded-lg px-3 py-2 text-sm shadow-sm"
     >
       <div className="flex items-center gap-1">
-        <span className="text-base">⇄</span>
-        <p className="font-medium leading-tight">{node.text.slice(0, 60)}</p>
+        <span className="shrink-0 text-base">⇄</span>
+        <p className="break-all font-medium leading-tight">{node.text.slice(0, 60)}</p>
       </div>
       <p className="mt-1 text-[10px] opacity-60">
         {node.kind === 'score_branch' ? `${node.branches.length} faixas · ${node.scoreKey}` : ''}
@@ -78,10 +78,10 @@ function ResultNodeComponent({ data }: { data: FlowNodeData }) {
   return (
     <div
       style={{ border: '1px solid #bdcabf', background: '#f0f3ff', color: '#111c2c' }}
-      className="min-w-[160px] max-w-[220px] rounded-lg px-3 py-2 text-sm shadow-sm"
+      className="min-w-[160px] max-w-[220px] overflow-hidden rounded-lg px-3 py-2 text-sm shadow-sm"
     >
       <div className="flex items-start justify-between gap-1">
-        <p className="leading-tight text-on-surface-variant">{node.text.slice(0, 60)}{node.text.length > 60 ? '…' : ''}</p>
+        <p className="break-all leading-tight text-on-surface-variant">{node.text.slice(0, 60)}{node.text.length > 60 ? '…' : ''}</p>
         <span className="ml-1 shrink-0 rounded-full bg-surface-container px-1.5 py-0.5 text-[10px] font-bold text-on-surface-variant">FIM</span>
       </div>
     </div>

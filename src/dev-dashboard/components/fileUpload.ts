@@ -24,7 +24,8 @@ export function isImageFile(file: File): boolean {
 export function parseImageDataUrl(value: string | undefined): { mimeType: string; data: Uint8Array } | null {
   if (!value) return null;
 
-  const match = value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/]+={0,2})$/);
+  const normalizedValue = value.trim().replace(/\s/g, '');
+  const match = normalizedValue.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/]+={0,2})$/);
   if (!match) return null;
 
   const mimeType = match[1] ?? '';
@@ -32,9 +33,11 @@ export function parseImageDataUrl(value: string | undefined): { mimeType: string
 
   try {
     const base64 = match[2] ?? '';
-    if (base64.length % 4 !== 0) return null;
+    const remainder = base64.length % 4;
+    if (remainder === 1) return null;
 
-    const binary = atob(base64);
+    const paddedBase64 = remainder === 0 ? base64 : base64.padEnd(base64.length + 4 - remainder, '=');
+    const binary = atob(paddedBase64);
     const data = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {
       data[i] = binary.charCodeAt(i);

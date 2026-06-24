@@ -105,6 +105,75 @@ describe('validateDashboardEducation', () => {
     expect(result.errors).toEqual([]);
   });
 
+  it('accepts relative image paths for thumbnails, featured images, and body images', () => {
+    const result = validateDashboardEducation(
+      [
+        {
+          ...baseResource,
+          imageUrl: '/assets/thumb.png',
+          featuredImage: { kind: 'external', imageUrl: '/assets/main.webp' },
+          body: [{ id: 'image-one', kind: 'image', imageUrl: '/assets/body.jpg' }],
+        },
+      ],
+      [],
+    );
+
+    expect(result.errors).toEqual([]);
+  });
+
+  it('accepts exported relative paths for uploaded featured images', () => {
+    const result = validateDashboardEducation(
+      [
+        {
+          ...baseResource,
+          featuredImage: { kind: 'uploaded', dataUrl: './images/resource-featured.jpg', fileName: 'main.jpg' },
+        },
+      ],
+      [],
+    );
+
+    expect(result.errors).toEqual([]);
+  });
+
+  it('accepts uploaded image data URLs with whitespace and missing padding', () => {
+    const result = validateDashboardEducation(
+      [
+        {
+          ...baseResource,
+          imageUrl: 'data:image/png;base64,QU\nJD',
+          featuredImage: { kind: 'uploaded', dataUrl: ' data:image/png;base64,RE VG ', fileName: 'main.png' },
+          body: [{ id: 'image-one', kind: 'image', imageUrl: 'data:image/png;base64,R0hJ' }],
+        },
+      ],
+      [],
+    );
+
+    expect(result.errors).toEqual([]);
+  });
+
+  it('rejects protocol-relative image URLs', () => {
+    const result = validateDashboardEducation([{ ...baseResource, imageUrl: '//example.com/thumb.jpg' }], []);
+
+    expect(result.errors).toContainEqual(expect.objectContaining({ id: 'invalid-thumbnail-image:resource-one' }));
+  });
+
+  it('asks for an image when uploaded featured image mode has no selected file', () => {
+    const result = validateDashboardEducation(
+      [{ ...baseResource, featuredImage: { kind: 'uploaded', dataUrl: '', fileName: '' } }],
+      [],
+    );
+
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({
+        id: 'missing-uploaded-featured-image:resource-one',
+        message: 'Escolha uma imagem principal do computador ou use outra opção de imagem.',
+      }),
+    );
+    expect(result.errors).not.toContainEqual(
+      expect.objectContaining({ id: 'invalid-uploaded-featured-image:resource-one' }),
+    );
+  });
+
   it('rejects corrupt uploaded image data URLs', () => {
     const result = validateDashboardEducation(
       [

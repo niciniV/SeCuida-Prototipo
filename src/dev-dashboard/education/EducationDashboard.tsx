@@ -37,6 +37,15 @@ const blockKindLabels: Record<EducationResourceBlock['kind'], string> = {
 
 type ManagedEducationGroup = EducationResourceGroup & { isDefault?: boolean };
 
+function isUploadedImageValue(value: string | undefined) {
+  return value?.trimStart().startsWith('data:') ?? false;
+}
+
+function uploadedImageInputLabel(fileName: string | undefined) {
+  const label = fileName?.trim() || 'Base64';
+  return `Imagem enviada (${label})`;
+}
+
 export function EducationDashboard({
   resources,
   groups,
@@ -230,24 +239,40 @@ export function EducationDashboard({
                   <input
                     aria-label="URL da miniatura da biblioteca"
                     className={`${inputClass} flex-1`}
-                    value={selectedResource.imageUrl ?? ''}
+                    disabled={isUploadedImageValue(selectedResource.imageUrl)}
+                    value={
+                      isUploadedImageValue(selectedResource.imageUrl)
+                        ? uploadedImageInputLabel(selectedResource.imageFileName)
+                        : (selectedResource.imageUrl ?? '')
+                    }
                     onChange={(event) => changeField({ imageUrl: event.target.value })}
                   />
-                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-outline-variant bg-surface-container-lowest px-3 py-1 text-sm font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                    <input
-                      type="file"
-                      accept={acceptImageTypes()}
-                      className="sr-only"
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0];
-                        if (!file || !isImageFile(file)) return;
-                        const dataUrl = await readFileAsDataUrl(file);
-                        changeField({ imageUrl: dataUrl, imageFileName: file.name });
-                        event.target.value = '';
-                      }}
-                    />
-                    Enviar imagem
-                  </label>
+                  {isUploadedImageValue(selectedResource.imageUrl) ? (
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      onClick={() => changeField({ imageUrl: '', imageFileName: '' })}
+                    >
+                      Deletar miniatura da biblioteca
+                    </Button>
+                  ) : (
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-outline-variant bg-surface-container-lowest px-3 py-1 text-sm font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                      <input
+                        type="file"
+                        accept={acceptImageTypes()}
+                        className="sr-only"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0];
+                          if (!file || !isImageFile(file)) return;
+                          const dataUrl = await readFileAsDataUrl(file);
+                          changeField({ imageUrl: dataUrl, imageFileName: file.name });
+                          event.target.value = '';
+                        }}
+                      />
+                      Enviar imagem
+                    </label>
+                  )}
                 </div>
                 {selectedResource.imageUrl ? (
                   <div className="h-32 w-full overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low">
@@ -331,21 +356,33 @@ export function EducationDashboard({
                   </div>
                 ) : featuredImage.kind === 'uploaded' ? (
                   <div className="flex flex-col gap-3">
-                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 self-start rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-2 font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                      <input
-                        type="file"
-                        accept={acceptImageTypes()}
-                        className="sr-only"
-                        onChange={async (event) => {
-                          const file = event.target.files?.[0];
-                          if (!file || !isImageFile(file)) return;
-                          const dataUrl = await readFileAsDataUrl(file);
-                          updateFeaturedImage({ kind: 'uploaded', dataUrl, fileName: file.name });
-                          event.target.value = '';
-                        }}
-                      />
-                      {featuredImage.dataUrl ? 'Trocar imagem' : 'Escolher imagem'}
-                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <label className="inline-flex cursor-pointer items-center justify-center gap-2 self-start rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-2 font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <input
+                          type="file"
+                          accept={acceptImageTypes()}
+                          className="sr-only"
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0];
+                            if (!file || !isImageFile(file)) return;
+                            const dataUrl = await readFileAsDataUrl(file);
+                            updateFeaturedImage({ kind: 'uploaded', dataUrl, fileName: file.name });
+                            event.target.value = '';
+                          }}
+                        />
+                        {featuredImage.dataUrl ? 'Trocar imagem' : 'Escolher imagem'}
+                      </label>
+                      {featuredImage.dataUrl ? (
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          onClick={() => updateFeaturedImage({ kind: 'catalog', imageId: defaultFeaturedImageId })}
+                        >
+                          Deletar imagem principal
+                        </Button>
+                      ) : null}
+                    </div>
                     {featuredImage.dataUrl ? (
                       <div className="h-48 w-full overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low">
                         <img
@@ -742,25 +779,42 @@ function BlockFields({
             aria-label={`URL da imagem do bloco ${blockNumber}`}
             aria-invalid={invalid || undefined}
             className={baseInput}
-            value={block.imageUrl ?? ''}
+            disabled={isUploadedImageValue(block.imageUrl)}
+            value={
+              isUploadedImageValue(block.imageUrl)
+                ? uploadedImageInputLabel(block.imageFileName)
+                : (block.imageUrl ?? '')
+            }
             onChange={(e) => onChange({ imageUrl: e.target.value })}
           />
         </label>
-        <label className="inline-flex cursor-pointer items-center justify-center gap-2 self-start rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-2 font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-          <input
-            type="file"
-            accept={acceptImageTypes()}
-            className="sr-only"
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              if (!file || !isImageFile(file)) return;
-              const dataUrl = await readFileAsDataUrl(file);
-              onChange({ imageUrl: dataUrl, imageFileName: file.name });
-              event.target.value = '';
-            }}
-          />
-          {block.imageUrl ? 'Trocar imagem do bloco' : 'Enviar imagem do bloco'}
-        </label>
+        {isUploadedImageValue(block.imageUrl) ? (
+          <Button
+            type="button"
+            variant="danger"
+            size="sm"
+            className="self-start"
+            onClick={() => onChange({ imageUrl: '', imageFileName: '' })}
+          >
+            Deletar imagem do bloco {blockNumber}
+          </Button>
+        ) : (
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 self-start rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-2 font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            <input
+              type="file"
+              accept={acceptImageTypes()}
+              className="sr-only"
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file || !isImageFile(file)) return;
+                const dataUrl = await readFileAsDataUrl(file);
+                onChange({ imageUrl: dataUrl, imageFileName: file.name });
+                event.target.value = '';
+              }}
+            />
+            {block.imageUrl ? 'Trocar imagem do bloco' : 'Enviar imagem do bloco'}
+          </label>
+        )}
         {block.imageUrl ? (
           <div className="h-40 w-full overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low">
             <img alt={block.alt ?? ''} className="h-full w-full object-cover" src={block.imageUrl} />

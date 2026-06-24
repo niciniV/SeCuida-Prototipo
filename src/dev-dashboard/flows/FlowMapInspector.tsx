@@ -20,7 +20,7 @@ const effectColors: Record<string, string> = {
 
 const effectLabels: Record<string, (effect: Record<string, unknown>) => string> = {
   score: (e) => `+${e.value} em ${e.scoreKey}`,
-  deferred_safety: (e) => `⚠ deferred → ${e.destination}`,
+  deferred_safety: (e) => `⚠ segurança adiada → ${e.destination}`,
   safety_interrupt: (e) => `⚠ interrompe → ${e.destination}`,
   flow_start: (e) => `→ fluxo ${e.flowId}`,
   navigate: (e) => `→ ${e.destination}`,
