@@ -206,6 +206,8 @@ describe('DashboardRoute', () => {
       </MemoryRouter>,
     );
 
+    fireEvent.click(screen.getByText('Configurações Iniciais e Entrada do Fluxo'));
+
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Fluxos' })).toBeInTheDocument();
     expect(screen.getByText('São frases que uma pessoa pode escolher para começar este fluxo.')).toBeInTheDocument();
@@ -222,6 +224,8 @@ describe('DashboardRoute', () => {
         <DashboardRoute />
       </MemoryRouter>,
     );
+
+    fireEvent.click(screen.getByText('Configurações Iniciais e Entrada do Fluxo'));
 
     expect(
       screen.getByText('Conversa principal: começa quando a pessoa digita ou escolhe uma frase'),
@@ -242,6 +246,8 @@ describe('DashboardRoute', () => {
         <DashboardRoute />
       </MemoryRouter>,
     );
+
+    fireEvent.click(screen.getByText('Configurações Iniciais e Entrada do Fluxo'));
 
     expect(screen.getByLabelText('Frase de entrada 1').tagName).toBe('TEXTAREA');
   });
@@ -305,6 +311,8 @@ describe('DashboardRoute', () => {
         <DashboardRoute />
       </MemoryRouter>,
     );
+
+    fireEvent.click(screen.getByText('Configurações Iniciais e Entrada do Fluxo'));
 
     const titleInput = screen.getByLabelText('Título do fluxo');
     fireEvent.change(titleInput, { target: { value: 'Fluxo editado localmente' } });
@@ -425,8 +433,8 @@ describe('DashboardRoute', () => {
     await user.click(screen.getByRole('button', { name: 'Editor' }));
     await user.click(screen.getByRole('button', { name: /Apoio ao final/i }));
 
-    expect(screen.getByText(/Etapa 19 — q17/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Etapa 20 — q18/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Etapa 19 — Tem tido ideia de acabar com a vida/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Etapa 20 — Sente-se cansado/i)).not.toBeInTheDocument();
   });
 
   it('shows deferred safety editor separately from score editor on SRQ-20 Q17', async () => {
@@ -575,7 +583,7 @@ describe('DashboardRoute', () => {
     expect(screen.getByRole('button', { name: /q2_copia/i })).toBeInTheDocument();
 
     // The cloned stage should be active/selected, verify it points to original next (q3)
-    expect(screen.getByText(/Etapa \d+ — q2_copia/i)).toBeInTheDocument();
+    expect(screen.getByText(/Etapa 27 — Tem falta de apetite/i)).toBeInTheDocument();
     const option1Select = screen.getByRole('combobox', { name: 'Ação principal da opção' });
     expect(option1Select).toHaveValue('q3');
 
@@ -1261,6 +1269,42 @@ describe('DashboardRoute', () => {
     // Click it and verify a new node is created (will be named 'nova_etapa' or 'nova_etapa_x')
     await user.click(addStageBtn);
     expect(screen.getByRole('button', { name: /nova_etapa/i })).toBeInTheDocument();
+  });
+
+  it('renders all stages as collapsible cards, expands active, swaps text/type position, and supports deletion with confirmation', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
+    await user.click(screen.getByRole('button', { name: 'Editor' }));
+
+    // Click Etapa 3 (q1)
+    await user.click(screen.getByRole('button', { name: /Etapa 3/i }));
+
+    // Active stage card header shows Etapa 3 — Você tem dores de cabeça frequentes? (ID q1 is hidden/demoted)
+    expect(screen.getByRole('heading', { name: /Etapa 3 — Você tem dores de cabeça frequentes\?/i })).toBeInTheDocument();
+    
+    // Verify "Texto da etapa" textarea is positioned above "Tipo da etapa" select in DOM order
+    const textLabel = screen.getByText('Texto da etapa');
+    const typeLabel = screen.getByText('Tipo da etapa');
+    expect(textLabel.compareDocumentPosition(typeLabel)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    // Verify stage q2 card is collapsed (its text content is not editable/visible initially)
+    expect(screen.queryByLabelText(/Texto da Etapa 4/i)).not.toBeInTheDocument();
+
+    // Click delete stage button
+    await user.click(screen.getByRole('button', { name: /Excluir etapa/i }));
+    
+    // Confirm delete
+    const confirmBtn = screen.getByRole('button', { name: /Confirmar exclusão da etapa/i });
+    expect(confirmBtn).toBeInTheDocument();
+    await user.click(confirmBtn);
+
+    // Etapa 3 (q1) is deleted, now Etapa 3 becomes Q2
+    expect(screen.queryByRole('heading', { name: /Etapa 3 — Você tem dores de cabeça frequentes\?/i })).not.toBeInTheDocument();
   });
 });
 
