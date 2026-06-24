@@ -2,6 +2,8 @@ import handsHoldingPlant from '../../assets/featured-images/hands_holding_plant.
 import classroom1 from '../../assets/featured-images/classroom_1.png';
 import classroom2 from '../../assets/featured-images/classroom_2.png';
 import greenPatch from '../../assets/featured-images/green_patch.png';
+import respiracao1 from '../../assets/images/respiracao1.jpg';
+import respiracao2 from '../../assets/images/respiracao2.jpg';
 
 export interface FeaturedImageOption {
   id: string;
@@ -29,6 +31,16 @@ export const featuredImageOptions = [
     id: 'green-patch',
     src: greenPatch,
     alt: 'Mesa com café e um caderno com uma janela para uma floresta ao lado.',
+  },
+  {
+    id: 'respiracao-1',
+    src: respiracao1,
+    alt: 'Exercício de respiração passo 1.',
+  },
+  {
+    id: 'respiracao-2',
+    src: respiracao2,
+    alt: 'Exercício de respiração passo 2.',
   },
 ] satisfies FeaturedImageOption[];
 
