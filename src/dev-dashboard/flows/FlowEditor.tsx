@@ -14,6 +14,7 @@ export function FlowEditor({
   selectedNodeId,
   nodeSearch,
   activeNodeFilter,
+  onSelectNodeId,
 }: {
   flow: GuidedFlow;
   flows: GuidedFlow[];
@@ -21,6 +22,7 @@ export function FlowEditor({
   selectedNodeId: string | null;
   nodeSearch: string;
   activeNodeFilter: 'all' | 'result' | 'safety' | 'branch';
+  onSelectNodeId: (nodeId: string | null) => void;
 }) {
   const [activeOptionEdit, setActiveOptionEdit] = useState<{ nodeId: string; optionId: string } | null>(null);
   const nodes = Object.values(flow.nodes);
@@ -98,6 +100,32 @@ export function FlowEditor({
         [node.id]: node,
       },
     });
+  }
+
+  function duplicateNode(nodeId: string) {
+    const sourceNode = flow.nodes[nodeId];
+    if (!sourceNode) return;
+
+    const newId = createUniqueId(`${nodeId}_copia`, flow.nodes);
+    const clonedNode = JSON.parse(JSON.stringify(sourceNode)) as FlowNode;
+    clonedNode.id = newId;
+
+    const nextNodes = { ...flow.nodes };
+    nextNodes[newId] = clonedNode;
+
+    if (sourceNode.kind === 'choice') {
+      const updatedSource = {
+        ...sourceNode,
+        options: sourceNode.options.map((option) => ({
+          ...option,
+          next: newId,
+        })),
+      };
+      nextNodes[nodeId] = updatedSource;
+    }
+
+    onChange({ nodes: nextNodes });
+    onSelectNodeId(newId);
   }
 
   function updateNodeKind(node: FlowNode, kind: FlowNode['kind']) {
@@ -290,6 +318,14 @@ export function FlowEditor({
                           {getNodePreview(node.text)}
                         </span>
                       </span>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => duplicateNode(node.id)}
+                      >
+                        👯 Duplicar esta etapa
+                      </Button>
                     </div>
                   </h4>
 

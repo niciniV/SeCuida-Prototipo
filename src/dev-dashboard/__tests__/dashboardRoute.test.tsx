@@ -550,6 +550,45 @@ describe('DashboardRoute', () => {
     expect(scoreKeyInput).toHaveValue('srq20');
   });
 
+  it('duplicates a stage and chains it sequentially', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+    const select = screen.queryByRole('combobox', { name: 'Selecionar fluxo' });
+    if (select) {
+      await user.selectOptions(select, 'srq20');
+    } else {
+      await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
+    }
+    await user.click(screen.getByRole('button', { name: 'Editor' }));
+    await user.click(screen.getByRole('button', { name: /Etapa 4 — q2/i }));
+
+    // Click duplicate button
+    await user.click(screen.getByRole('button', { name: /Duplicar esta etapa/i }));
+
+    // Cloned stage is created in the outline list
+    expect(screen.getByRole('button', { name: /q2_copia/i })).toBeInTheDocument();
+
+    // The cloned stage should be active/selected, verify it points to original next (q3)
+    expect(screen.getByText(/Etapa \d+ — q2_copia/i)).toBeInTheDocument();
+    const option1Select = screen.getByRole('combobox', { name: 'Ação principal da opção' });
+    expect(option1Select).toHaveValue('q3');
+
+    const option2Select = screen.getByRole('combobox', { name: 'Ação da opção 2' });
+    expect(option2Select).toHaveValue('q3');
+
+    // Go back to the original stage (q2) and verify it now points to the clone (q2_copia)
+    await user.click(screen.getByRole('button', { name: /Etapa 4 — q2/i }));
+    const originalOption1Select = screen.getByRole('combobox', { name: 'Ação principal da opção' });
+    expect(originalOption1Select).toHaveValue('q2_copia');
+
+    const originalOption2Select = screen.getByRole('combobox', { name: 'Ação da opção 2' });
+    expect(originalOption2Select).toHaveValue('q2_copia');
+  });
+
   it('updates a local education title draft', () => {
     render(
       <MemoryRouter>

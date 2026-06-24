@@ -237,6 +237,7 @@ export function FlowDashboard({
             selectedNodeId={activeNodeId}
             nodeSearch={nodeSearch}
             activeNodeFilter={activeNodeFilter}
+            onSelectNodeId={setSelectedNodeId}
           />
         )}
 
