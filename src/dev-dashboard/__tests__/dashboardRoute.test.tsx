@@ -264,7 +264,7 @@ describe('DashboardRoute', () => {
 
     // The Master checklist list on the left sidebar
     expect(screen.getByRole('heading', { name: /Etapas /i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /consent/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Antes de começar/i })[0]).toBeInTheDocument();
 
     // Renders ONLY the selected stage (consent) in detail area, others (like instructions) are not visible
     expect(
@@ -336,7 +336,7 @@ describe('DashboardRoute', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar etapa' }));
     // Since adding a stage auto-selects it, we select start (Etapa 1) again to edit options
-    fireEvent.click(screen.getByRole('button', { name: /start/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /Texto editado da etapa inicial/i })[0]);
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar opção na etapa 1' }));
 
     expect(screen.getByDisplayValue('Texto editado da etapa inicial')).toBeInTheDocument();
@@ -353,7 +353,7 @@ describe('DashboardRoute', () => {
     );
 
     // Click on the second stage (done) in the master outline list
-    fireEvent.click(screen.getByRole('button', { name: /done/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /Finalizado/i })[0]);
 
     fireEvent.change(screen.getByLabelText('Tipo da etapa 2'), {
       target: { value: 'choice' },
@@ -381,7 +381,7 @@ describe('DashboardRoute', () => {
     expect(screen.queryByLabelText('Texto da etapa 2')).not.toBeInTheDocument();
 
     // Click on the second stage (done) in the outline list
-    fireEvent.click(screen.getByRole('button', { name: /done/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /Finalizado/i })[0]);
 
     // Now the second stage (done) is open, and first stage (start) is hidden
     expect(screen.getByLabelText('Texto da etapa 2')).toBeInTheDocument();
@@ -441,7 +441,7 @@ describe('DashboardRoute', () => {
 
     await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
     await user.click(screen.getByRole('button', { name: 'Editor' }));
-    await user.click(screen.getByRole('button', { name: /Etapa 19 — q17/i }));
+    await user.click(screen.getAllByRole('button', { name: /Etapa 19 — Tem tido ideia de acabar com a vida/i })[0]);
 
     // Open drawer
     await user.click(screen.getAllByRole('button', { name: /Ações\/Score/i })[0]);
@@ -466,9 +466,7 @@ describe('DashboardRoute', () => {
     }
     await user.click(screen.getByRole('button', { name: 'Editor' }));
 
-    const stageButton =
-      screen.queryByRole('button', { name: /Etapa 18 — q17/i }) ||
-      screen.getByRole('button', { name: /Etapa 19 — q17/i });
+    const stageButton = screen.getAllByRole('button', { name: /Tem tido ideia de acabar com a vida/i })[0];
     await user.click(stageButton);
 
     // Green footer badge with destination select inline
@@ -541,7 +539,7 @@ describe('DashboardRoute', () => {
       await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
     }
     await user.click(screen.getByRole('button', { name: 'Editor' }));
-    await user.click(screen.getByRole('button', { name: /Etapa 4 — q2/i })); // select q2
+    await user.click(screen.getAllByRole('button', { name: /Etapa 4 — Tem falta de apetite/i })[0]); // select q2
 
     // Open drawer
     await user.click(screen.getAllByRole('button', { name: /Ações\/Score/i })[0]);
@@ -572,13 +570,13 @@ describe('DashboardRoute', () => {
       await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
     }
     await user.click(screen.getByRole('button', { name: 'Editor' }));
-    await user.click(screen.getByRole('button', { name: /Etapa 4 — q2/i }));
+    await user.click(screen.getAllByRole('button', { name: /Etapa 4 — Tem falta de apetite/i })[0]);
 
     // Click duplicate button
     await user.click(screen.getByRole('button', { name: /Duplicar esta etapa/i }));
 
     // Cloned stage is created in the outline list
-    expect(screen.getByRole('button', { name: /q2_copia/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/Tem falta de apetite/i).length).toBeGreaterThan(1);
 
     // The cloned stage should be active/selected, verify it points to original next (q3)
     expect(screen.getByText(/Etapa 27 — Tem falta de apetite/i)).toBeInTheDocument();
@@ -589,7 +587,7 @@ describe('DashboardRoute', () => {
     expect(option2Select).toHaveValue('q3');
 
     // Go back to the original stage (q2) and verify it now points to the clone (q2_copia)
-    await user.click(screen.getByRole('button', { name: /Etapa 4 — q2/i }));
+    await user.click(screen.getAllByRole('button', { name: /Etapa 4 — Tem falta de apetite/i })[0]);
     const originalOption1Select = screen.getByRole('combobox', { name: 'Ação principal da opção' });
     expect(originalOption1Select).toHaveValue('q2_copia');
 
@@ -1297,7 +1295,7 @@ describe('DashboardRoute', () => {
 
     // Click it and verify a new node is created (will be named 'nova_etapa' or 'nova_etapa_x')
     await user.click(addStageBtn);
-    expect(screen.getByRole('button', { name: /nova_etapa/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Nova etapa final/i }).length).toBeGreaterThan(0);
   });
 
   it('renders all stages as collapsible cards, expands active, swaps text/type position, and supports deletion with confirmation', async () => {
@@ -1311,7 +1309,7 @@ describe('DashboardRoute', () => {
     await user.click(screen.getByRole('button', { name: 'Editor' }));
 
     // Click Etapa 3 (q1)
-    await user.click(screen.getByRole('button', { name: 'Etapa 3 — q1' }));
+    await user.click(screen.getByRole('button', { name: 'Etapa 3 — Você tem dores de cabeça frequentes?' }));
 
     // Active stage card header shows Etapa 3 — Você tem dores de cabeça frequentes? (ID q1 is hidden/demoted)
     expect(
@@ -1349,7 +1347,7 @@ describe('DashboardRoute', () => {
     );
     await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
     await user.click(screen.getByRole('button', { name: 'Editor' }));
-    await user.click(screen.getByRole('button', { name: 'Etapa 4 — q2' })); // Q2 stage in the outline list
+    await user.click(screen.getByRole('button', { name: 'Etapa 4 — Tem falta de apetite?' })); // Q2 stage in the outline list
 
     // Click option 1 actions to open drawer (Ações/Score button)
     await user.click(screen.getAllByRole('button', { name: /Ações\/Score/i })[0]);
