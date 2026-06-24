@@ -7,18 +7,16 @@ import { validateDashboardFlows } from './flowValidation';
 import { FlowEditor } from './FlowEditor';
 import { FlowMap } from './FlowMap';
 import { FlowPreview } from './FlowPreview';
-import { FlowRedirections } from './FlowRedirectionsPanel';
 import { inputClassSm } from '../components/fieldStyles';
 import { getFlowNodeTitle } from './flowDisplay';
 
-type FlowDetailTab = 'editor' | 'preview' | 'map' | 'redirections';
+type FlowDetailTab = 'editor' | 'preview' | 'map';
 type NodeFilter = 'all' | 'result' | 'safety' | 'branch';
 
 const flowDetailTabs: Array<{ id: FlowDetailTab; label: string }> = [
   { id: 'editor', label: 'Editor' },
   { id: 'preview', label: 'Testar conversa' },
   { id: 'map', label: 'Mapa visual' },
-  { id: 'redirections', label: 'Redirecionamentos' },
 ];
 
 export function FlowDashboard({
@@ -354,10 +352,9 @@ export function FlowDashboard({
             flow={selectedFlow}
             flows={flows}
             onFlowChange={(patch) => onFlowChange(effectiveIndex, selectedFlow.id, patch)}
+            onEditNode={handleEditNode}
           />
         )}
-
-        {activeDetailTab === 'redirections' && <FlowRedirections flow={selectedFlow} onEditNode={handleEditNode} />}
 
         <ValidationSummary result={validation} />
       </div>
