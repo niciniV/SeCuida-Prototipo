@@ -20,6 +20,13 @@ export interface SafetyInterruptFlowEffect {
   blockResume: boolean;
 }
 
+export interface DeferredSafetyFlowEffect {
+  kind: 'deferred_safety';
+  flagKey: string;
+  message: string;
+  destination: Exclude<GlobalActionTarget, 'end'>;
+}
+
 export interface FlowStartFlowEffect {
   kind: 'flow_start';
   flowId: string;
@@ -38,6 +45,7 @@ export interface EndFlowEffect {
 export type FlowEffect =
   | ScoreFlowEffect
   | SafetyInterruptFlowEffect
+  | DeferredSafetyFlowEffect
   | FlowStartFlowEffect
   | NavigateFlowEffect
   | EndFlowEffect;
@@ -119,6 +127,12 @@ export interface SuspendedFlowState {
   transcript: ChatMessage[];
 }
 
+export interface DeferredNavigationState {
+  destination: Exclude<GlobalActionTarget, 'end'>;
+  message: string;
+  reason: string;
+}
+
 export interface FlowRuntimeState {
   activeFlowId?: string;
   activeNodeId?: string;
@@ -128,6 +142,7 @@ export interface FlowRuntimeState {
   scores: Record<string, number>;
   safetyFlags: Record<string, boolean>;
   pendingNavigation?: Exclude<GlobalActionTarget, 'end'>;
+  deferredNavigation?: DeferredNavigationState;
 }
 
 export interface RuntimeNodeOption {

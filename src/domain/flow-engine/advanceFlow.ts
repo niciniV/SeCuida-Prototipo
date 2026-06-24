@@ -145,6 +145,21 @@ function applyOptionEffects(state: FlowRuntimeState, flowId: string, effects: Fl
       };
     }
 
+    if (effect.kind === 'deferred_safety') {
+      return {
+        ...nextState,
+        safetyFlags: {
+          ...nextState.safetyFlags,
+          [effect.flagKey]: true,
+        },
+        deferredNavigation: {
+          destination: effect.destination,
+          message: effect.message,
+          reason: effect.flagKey,
+        },
+      };
+    }
+
     if (effect.kind === 'navigate') {
       return {
         ...nextState,
@@ -190,10 +205,21 @@ function advanceToNode(state: FlowRuntimeState, flow: GuidedFlow, nodeId: string
     return advanceToNode(state, flow, resolveScoreBranchNextNode(state, node));
   }
 
-  return {
+  const nextState = {
     ...state,
     activeNodeId: node.id,
     transcript: [...state.transcript, createMessage('bot', node.text, flow.id, node.id)],
+  };
+
+  if (node.kind !== 'result' || !nextState.deferredNavigation) return nextState;
+
+  return {
+    ...nextState,
+    pendingNavigation: nextState.deferredNavigation.destination,
+    transcript: [
+      ...nextState.transcript,
+      createMessage('bot', nextState.deferredNavigation.message, flow.id, node.id),
+    ],
   };
 }
 

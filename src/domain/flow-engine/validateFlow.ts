@@ -162,6 +162,19 @@ function validateEffect(flowLabel: string, optionId: string, effect: FlowEffect,
     return;
   }
 
+  if (effect.kind === 'deferred_safety') {
+    if (
+      !hasText(effect.flagKey) ||
+      !hasText(effect.message) ||
+      !['/apoio', '/contatos', '/educacao'].includes(String(effect.destination))
+    ) {
+      errors.push(
+        `Flow ${flowLabel} option ${optionId} deferred safety effect must include flagKey, message, and a supported destination.`,
+      );
+    }
+    return;
+  }
+
   if (effect.kind === 'flow_start') {
     if (!hasText(effect.flowId)) {
       errors.push(`Flow ${flowLabel} option ${optionId} flow_start effect must include flowId.`);

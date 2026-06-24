@@ -676,6 +676,67 @@ describe('flow runtime', () => {
     );
   });
 
+  it('records deferred safety routing and continues until the result node', () => {
+    const deferredSafetyFlow: GuidedFlow = {
+      ...scoringFlow,
+      id: 'deferred-safety-flow',
+      title: 'Fluxo com segurança ao final',
+      nodes: {
+        q1: {
+          id: 'q1',
+          kind: 'choice',
+          text: 'Você precisa de apoio?',
+          options: [
+            {
+              id: 'yes',
+              label: 'Sim',
+              next: 'q2',
+              effects: [
+                {
+                  kind: 'deferred_safety',
+                  flagKey: 'self_harm_ideation',
+                  message:
+                    'Obrigado por responder com sinceridade. Vamos abrir a página de apoio depois do resultado.',
+                  destination: '/apoio',
+                },
+              ],
+            },
+            { id: 'no', label: 'Não', next: 'q2' },
+          ],
+        },
+        q2: {
+          id: 'q2',
+          kind: 'choice',
+          text: 'Última pergunta.',
+          options: [{ id: 'finish', label: 'Finalizar', next: 'result' }],
+        },
+        result: { id: 'result', kind: 'result', text: 'Resultado calculado.' },
+      },
+    };
+
+    let state = createInitialFlowState(deferredSafetyFlow, [deferredSafetyFlow]);
+    state = advanceFlow(state, [deferredSafetyFlow], 'Sim');
+
+    expect(state.activeNodeId).toBe('q2');
+    expect(state.pendingNavigation).toBeUndefined();
+    expect(state.safetyFlags.self_harm_ideation).toBe(true);
+    expect(state.deferredNavigation).toEqual({
+      destination: '/apoio',
+      message:
+        'Obrigado por responder com sinceridade. Vamos abrir a página de apoio depois do resultado.',
+      reason: 'self_harm_ideation',
+    });
+
+    state = advanceFlow(state, [deferredSafetyFlow], 'Finalizar');
+
+    expect(state.activeNodeId).toBe('result');
+    expect(state.pendingNavigation).toBe('/apoio');
+    expect(state.transcript.map((message) => message.text)).toContain('Resultado calculado.');
+    expect(state.transcript.map((message) => message.text)).toContain(
+      'Obrigado por responder com sinceridade. Vamos abrir a página de apoio depois do resultado.',
+    );
+  });
+
   it('ends the flow when an end_flow effect is applied', () => {
     const endFlowFixture: GuidedFlow = {
       ...validFlow,
