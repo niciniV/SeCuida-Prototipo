@@ -21,6 +21,7 @@ import {
   textareaClassTall,
 } from '../components/fieldStyles';
 import { ValidationSummary } from '../components/ValidationSummary';
+import { readFileAsDataUrl, acceptImageTypes, isImageFile } from '../components/fileUpload';
 import { issuesForPath } from '../validation/fieldIssues';
 import type { FieldIssues } from '../validation/fieldIssues';
 import { validateDashboardEducation } from './educationValidation';
@@ -225,12 +226,29 @@ export function EducationDashboard({
               </Field>
 
               <Field label="Miniatura da biblioteca" hint="Imagem pequena usada no cartão da biblioteca de Estudos.">
-                <input
-                  aria-label="URL da miniatura da biblioteca"
-                  className={inputClass}
-                  value={selectedResource.imageUrl ?? ''}
-                  onChange={(event) => changeField({ imageUrl: event.target.value })}
-                />
+                <div className="flex gap-2">
+                  <input
+                    aria-label="URL da miniatura da biblioteca"
+                    className={`${inputClass} flex-1`}
+                    value={selectedResource.imageUrl ?? ''}
+                    onChange={(event) => changeField({ imageUrl: event.target.value })}
+                  />
+                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-outline-variant bg-surface-container-lowest px-3 py-1 text-sm font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <input
+                      type="file"
+                      accept={acceptImageTypes()}
+                      className="sr-only"
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0];
+                        if (!file || !isImageFile(file)) return;
+                        const dataUrl = await readFileAsDataUrl(file);
+                        changeField({ imageUrl: dataUrl, imageFileName: file.name });
+                        event.target.value = '';
+                      }}
+                    />
+                    Enviar imagem
+                  </label>
+                </div>
               </Field>
 
               <fieldset
@@ -239,7 +257,7 @@ export function EducationDashboard({
               >
                 <legend className="font-label-md text-on-surface font-semibold">Imagem principal do material</legend>
                 <FieldHint>Imagem grande exibida acima do conteúdo do material.</FieldHint>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   <label className="flex items-center gap-2 font-label-md text-on-surface">
                     <input
                       checked={featuredImage.kind === 'catalog'}
@@ -259,6 +277,17 @@ export function EducationDashboard({
                       }
                     />
                     Usar URL externa
+                  </label>
+                  <label className="flex items-center gap-2 font-label-md text-on-surface">
+                    <input
+                      checked={featuredImage.kind === 'uploaded'}
+                      name="featured-image-kind"
+                      type="radio"
+                      onChange={() =>
+                        updateFeaturedImage({ kind: 'uploaded', dataUrl: '', fileName: '' })
+                      }
+                    />
+                    Enviar do computador
                   </label>
                 </div>
                 {featuredImage.kind === 'catalog' ? (
@@ -287,6 +316,45 @@ export function EducationDashboard({
                         </button>
                       );
                     })}
+                  </div>
+                ) : featuredImage.kind === 'uploaded' ? (
+                  <div className="flex flex-col gap-3">
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 self-start rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-2 font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                      <input
+                        type="file"
+                        accept={acceptImageTypes()}
+                        className="sr-only"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0];
+                          if (!file || !isImageFile(file)) return;
+                          const dataUrl = await readFileAsDataUrl(file);
+                          updateFeaturedImage({ kind: 'uploaded', dataUrl, fileName: file.name });
+                          event.target.value = '';
+                        }}
+                      />
+                      {featuredImage.dataUrl ? 'Trocar imagem' : 'Escolher imagem'}
+                    </label>
+                    {featuredImage.dataUrl ? (
+                      <div className="h-48 w-full overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low">
+                        <img
+                          alt={featuredImage.alt ?? ''}
+                          className="h-full w-full object-cover"
+                          src={featuredImage.dataUrl}
+                        />
+                      </div>
+                    ) : (
+                      <p className="font-body-md text-on-surface-variant">Nenhuma imagem selecionada.</p>
+                    )}
+                    <Field label="Descrição da imagem (acessibilidade)">
+                      <input
+                        aria-label="Descrição da imagem principal"
+                        className={inputClass}
+                        value={featuredImage.alt ?? ''}
+                        onChange={(event) =>
+                          updateFeaturedImage({ kind: 'uploaded', dataUrl: featuredImage.dataUrl, alt: event.target.value, fileName: featuredImage.fileName })
+                        }
+                      />
+                    </Field>
                   </div>
                 ) : (
                   <Field
@@ -649,6 +717,26 @@ function BlockFields({
             onChange={(e) => onChange({ imageUrl: e.target.value })}
           />
         </label>
+        <label className="inline-flex cursor-pointer items-center justify-center gap-2 self-start rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-2 font-label-md text-on-surface shadow-sm transition-colors hover:bg-surface-container-low hover:border-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          <input
+            type="file"
+            accept={acceptImageTypes()}
+            className="sr-only"
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (!file || !isImageFile(file)) return;
+              const dataUrl = await readFileAsDataUrl(file);
+              onChange({ imageUrl: dataUrl, imageFileName: file.name });
+              event.target.value = '';
+            }}
+          />
+          {block.imageUrl ? 'Trocar imagem do bloco' : 'Enviar imagem do bloco'}
+        </label>
+        {block.imageUrl && block.imageUrl.startsWith('data:') ? (
+          <div className="h-40 w-full overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-low">
+            <img alt={block.alt ?? ''} className="h-full w-full object-cover" src={block.imageUrl} />
+          </div>
+        ) : null}
         <label className="flex flex-col gap-2">
           <span className="font-label-md text-on-surface">Descrição da imagem do bloco {blockNumber}</span>
           <input

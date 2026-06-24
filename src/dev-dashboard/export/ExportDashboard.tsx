@@ -4,6 +4,8 @@ import type { DashboardDraftContent } from './exportBundle';
 import type { DashboardShippedContent } from '../content/shippedContent';
 import type { DashboardValidationResult } from '../validation/validationTypes';
 import { buildExportBundle } from './exportBundle';
+import { createZip } from './createZip';
+import { extractImagesFromDrafts } from './extractImages';
 import { Button } from '../../design-system/components/Button';
 
 const LAST_EXPORTED_AT_KEY = 'secuida:dev-dashboard:lastExportedAt';
@@ -45,16 +47,25 @@ export function ExportDashboard({
   const hasChanges = totalChanges > 0;
   const hasStaleExport = exportedAt !== null && draftUpdatedAt !== null && draftUpdatedAt > exportedAt;
 
-  function downloadBundle() {
+  async function downloadBundle() {
     if (hasErrors || !hasChanges) return;
 
-    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+    const { json, images } = extractImagesFromDrafts(bundle.changes);
+    const bundleWithPaths = { ...bundle, changes: json };
+
+    const files = [
+      { name: 'data.json', data: new TextEncoder().encode(JSON.stringify(bundleWithPaths, null, 2)) },
+      ...images.map((img) => ({ name: img.name, data: img.data })),
+    ];
+
+    const zipData = createZip(files);
+    const blob = new Blob([zipData], { type: 'application/zip' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     const date = bundle.exportedAt.slice(0, 10);
     const time = bundle.exportedAt.slice(11, 19).replace(/:/g, '-');
-    link.download = `secuida-dashboard-export-${date}-${time}.json`;
+    link.download = `secuida-dashboard-export-${date}-${time}.zip`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -69,9 +80,9 @@ export function ExportDashboard({
       <div>
         <h2 className="font-headline-sm text-on-surface">Arquivo para revisão</h2>
         <p className="mt-2 font-body-md text-on-surface-variant">
-          Envie este arquivo para a pessoa responsável pelo repositório.
+          Envie este arquivo ZIP para a pessoa responsável pelo repositório.
         </p>
-        <p className="font-body-md text-on-surface-variant">Ele não publica nada sozinho.</p>
+        <p className="font-body-md text-on-surface-variant">Ele contém o JSON de dados e as imagens enviadas.</p>
       </div>
 
       {!hasChanges ? (
@@ -113,7 +124,7 @@ export function ExportDashboard({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button disabled={hasErrors || !hasChanges} onClick={downloadBundle}>
-          Gerar arquivo JSON
+          Gerar arquivo ZIP
         </Button>
         {exportedAt ? (
           <span className="flex items-center gap-1.5 font-label-md text-on-surface-variant">

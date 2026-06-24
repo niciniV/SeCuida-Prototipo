@@ -54,13 +54,23 @@ export function validateDashboardEducation(resources: EducationResource[], group
         });
       }
     } else if (resource.featuredImage.kind === 'external') {
-      if (!isHttpUrl(resource.featuredImage.imageUrl)) {
+      if (!isValidImageUrl(resource.featuredImage.imageUrl)) {
         issues.push({
           level: 'error',
           area: 'education',
           id: `invalid-featured-image-url:${resource.id}`,
-          message: 'A URL da imagem principal precisa começar com http:// ou https://.',
+          message: 'A URL da imagem principal precisa ser um link http://, https:// ou um arquivo enviado.',
           path: `${resource.id}.featuredImage.imageUrl`,
+        });
+      }
+    } else if (resource.featuredImage.kind === 'uploaded') {
+      if (!isDataUrl(resource.featuredImage.dataUrl)) {
+        issues.push({
+          level: 'error',
+          area: 'education',
+          id: `invalid-uploaded-featured-image:${resource.id}`,
+          message: 'A imagem enviada parece estar corrompida. Tente enviar novamente.',
+          path: `${resource.id}.featuredImage.dataUrl`,
         });
       }
     }
@@ -140,12 +150,12 @@ function validateBodyBlock(issues: DashboardValidationIssue[], resourceId: strin
     });
   }
 
-  if (block.kind === 'image' && !isHttpUrl(block.imageUrl ?? '')) {
+  if (block.kind === 'image' && !isValidImageUrl(block.imageUrl ?? '')) {
     issues.push({
       level: 'error',
       area: 'education',
       id: `invalid-body-image-url:${resourceId}:${block.id}`,
-      message: 'A URL da imagem interna precisa começar com http:// ou https://.',
+      message: 'A URL da imagem interna precisa ser um link http://, https:// ou um arquivo enviado.',
       path: `${path}.imageUrl`,
     });
   }
@@ -188,4 +198,12 @@ function isHttpUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function isDataUrl(value: string) {
+  return value.startsWith('data:');
+}
+
+function isValidImageUrl(value: string) {
+  return isHttpUrl(value) || isDataUrl(value);
 }

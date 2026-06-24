@@ -66,6 +66,13 @@ function resolveFeaturedImage(resource: EducationResource) {
     };
   }
 
+  if (resource.featuredImage.kind === 'uploaded') {
+    return {
+      src: resource.featuredImage.dataUrl,
+      alt: resource.featuredImage.alt ?? '',
+    };
+  }
+
   const option = findFeaturedImageOption(resource.featuredImage.imageId);
   return option ? { src: option.src, alt: option.alt } : null;
 }
