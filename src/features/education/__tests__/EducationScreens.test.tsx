@@ -45,10 +45,6 @@ describe('EducationLibraryScreen', () => {
     expect(screen.getByRole('heading', { name: resource.title })).toBeInTheDocument();
     expect(screen.getByText('Sobre este material')).toBeInTheDocument();
     expect(screen.getByText('Aplicação prática')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /acessar fonte original/i })).toHaveAttribute(
-      'href',
-      'https://www.feevale.br/',
-    );
   });
 
   it('shows the preview warning when at least one material was actually added', () => {

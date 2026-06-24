@@ -100,8 +100,8 @@ describe('Resources content', () => {
     const resource = resourcesContent.resources[0];
 
     expect(resource.imageUrl).not.toContain('googleusercontent.com');
-    expect(resource.featuredImage).toEqual({ kind: 'catalog', imageId: 'hands-holding-plant' });
-    expect(resource.body?.map((block) => block.kind)).toEqual(['paragraph', 'video', 'paragraph', 'sourceLink']);
+    expect(resource.featuredImage).toEqual({ kind: 'catalog', imageId: 'respiracao-1' });
+    expect(resource.body?.map((block) => block.kind)).toEqual(['paragraph', 'video', 'image', 'image', 'paragraph']);
   });
 
   it('includes generated resources and lets them override base resource IDs', async () => {
@@ -146,7 +146,7 @@ describe('Flow registry', () => {
 
 describe('Featured image options', () => {
   it('defines bundled catalog images', () => {
-    expect(featuredImageOptions).toHaveLength(4);
+    expect(featuredImageOptions).toHaveLength(6);
     featuredImageOptions.forEach((option) => {
       expect(option.id).toBeTruthy();
       expect(option.src).toBeTruthy();

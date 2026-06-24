@@ -2,8 +2,8 @@ import handsHoldingPlant from '../../assets/featured-images/hands_holding_plant.
 import classroom1 from '../../assets/featured-images/classroom_1.png';
 import classroom2 from '../../assets/featured-images/classroom_2.png';
 import greenPatch from '../../assets/featured-images/green_patch.png';
-import respiracao1 from '../../assets/images/respiracao1.jpg';
-import respiracao2 from '../../assets/images/respiracao2.jpg';
+import respiracao1 from '../../../assets/images/respiracao1.jpg';
+import respiracao2 from '../../../assets/images/respiracao2.jpg';
 
 export interface FeaturedImageOption {
   id: string;

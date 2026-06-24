@@ -1,7 +1,5 @@
 import type { ResourcesContent } from '../../domain/resources/types';
 import { generatedResources } from './generated-resources';
-import respiracao1 from '../../../assets/images/respiracao1.jpg';
-import respiracao2 from '../../../assets/images/respiracao2.jpg';
 
 const pendingReview = {
   status: 'pending_review',
@@ -16,10 +14,10 @@ const baseResources = [
     title: 'Guia de Regulação Emocional',
     source: 'FEEVALE',
     description: 'Estratégias de suporte para apoiar o professor no cuidado pessoal com a sua saúde mental.',
-    imageUrl: respiracao1,
+    imageUrl: '/respiracao1.jpg',
     tags: ['regulação-emocional', 'respiração', 'professores'],
     audience: 'teachers',
-    featuredImage: { kind: 'uploaded', dataUrl: respiracao1, alt: 'Exercício de respiração' },
+    featuredImage: { kind: 'catalog', imageId: 'respiracao-1' },
     body: [
       {
         id: 'overview',
@@ -36,13 +34,13 @@ const baseResources = [
       {
         id: 'respiracao-image-1',
         kind: 'image',
-        imageUrl: respiracao1,
+        imageUrl: '/respiracao1.jpg',
         alt: 'Exercício de respiração passo 1',
       },
       {
         id: 'respiracao-image-2',
         kind: 'image',
-        imageUrl: respiracao2,
+        imageUrl: '/respiracao2.jpg',
         alt: 'Exercício de respiração passo 2',
       },
       {
