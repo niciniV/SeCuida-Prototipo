@@ -178,6 +178,19 @@ export function DashboardRoute() {
                 addedFlows: [...current.addedFlows, createLocalFlow(current.addedFlows.length)],
               }))
             }
+            onFlowRemove={(flowId) =>
+              updateDraftState((current) => {
+                const shippedIndex = shipped.flows.findIndex((f) => f.id === flowId);
+                return {
+                  ...current,
+                  addedFlows: current.addedFlows.filter((f) => f.id !== flowId),
+                  removedFlowIds:
+                    shippedIndex >= 0
+                      ? [...new Set([...(current.removedFlowIds ?? []), flowId])]
+                      : current.removedFlowIds,
+                };
+              })
+            }
           />
         )}
         {activeTab === 'education' && (

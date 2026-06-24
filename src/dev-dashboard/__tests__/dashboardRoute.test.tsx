@@ -253,7 +253,7 @@ describe('DashboardRoute', () => {
         <DashboardRoute />
       </MemoryRouter>,
     );
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Selecionar fluxo' }), 'srq20');
+    await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
     await user.click(screen.getByRole('button', { name: 'Editor' }));
 
     // The Master checklist list on the left sidebar
@@ -419,7 +419,7 @@ describe('DashboardRoute', () => {
     const user = userEvent.setup();
     render(<DashboardRoute />);
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Selecionar fluxo' }), 'srq20');
+    await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
     await user.click(screen.getByRole('button', { name: 'Editor' }));
     await user.click(screen.getByRole('button', { name: /Apoio ao final/i }));
 
@@ -431,7 +431,7 @@ describe('DashboardRoute', () => {
     const user = userEvent.setup();
     render(<DashboardRoute />);
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Selecionar fluxo' }), 'srq20');
+    await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
     await user.click(screen.getByRole('button', { name: 'Editor' }));
     await user.click(screen.getByRole('button', { name: /Etapa 19 — q17/i }));
 
@@ -497,7 +497,7 @@ describe('DashboardRoute', () => {
     const user = userEvent.setup();
     render(<DashboardRoute />);
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Selecionar fluxo' }), 'srq20');
+    await user.click(screen.getByRole('button', { name: 'SRQ-20' }));
     await user.click(screen.getByRole('button', { name: 'Testar conversa' }));
 
     await user.click(screen.getByRole('button', { name: 'Quero responder' }));
@@ -1203,4 +1203,37 @@ describe('DashboardRoute', () => {
 
     expect(onGroupRemove).toHaveBeenCalledWith(2, 'added-group');
   });
+
+  it('displays flow list in sidebar, allows adding and deleting a flow with confirmation', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <DashboardRoute />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Editor' }));
+
+    // Verify "+ Criar Novo Fluxo" button is in the sidebar
+    expect(screen.getByRole('button', { name: /\+ Criar Novo Fluxo/i })).toBeInTheDocument();
+
+    // Verify list displays flows
+    expect(screen.getByRole('button', { name: /^SRQ-20$/i })).toBeInTheDocument();
+    
+    // Select 'mock-flow' (second option in flows)
+    await user.click(screen.getByRole('button', { name: /^Fluxo de teste$/i }));
+
+    // Click delete flow button next to mock-flow
+    await user.click(screen.getByRole('button', { name: /^Remover fluxo Fluxo de teste$/i }));
+    
+    // Confirmation button is shown
+    const confirmBtn = screen.getByRole('button', { name: /^Confirmar exclusão de Fluxo de teste$/i });
+    expect(confirmBtn).toBeInTheDocument();
+    
+    // Click confirm
+    await user.click(confirmBtn);
+    
+    // Flow is gone
+    expect(screen.queryByRole('button', { name: /^Fluxo de teste$/i })).not.toBeInTheDocument();
+  });
 });
+

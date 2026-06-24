@@ -22,6 +22,7 @@ export interface DashboardDraftState {
   addedGroups: EducationResourceGroup[];
   defaultGroupOrder?: number;
   removedGroupIds?: string[];
+  removedFlowIds?: string[];
   updatedAt: string | null;
 }
 
@@ -36,6 +37,7 @@ export function createEmptyDashboardDraftState(): DashboardDraftState {
     addedGroups: [],
     defaultGroupOrder: 0,
     removedGroupIds: [],
+    removedFlowIds: [],
     updatedAt: null,
   };
 }
@@ -58,10 +60,15 @@ export function loadDashboardDrafts(storage: Storage = localStorage): DashboardD
         addedGroups: (record.addedGroups ?? []) as EducationResourceGroup[],
         defaultGroupOrder: (record.defaultGroupOrder ?? 0) as number,
         removedGroupIds: (record.removedGroupIds ?? []) as string[],
+        removedFlowIds: (record.removedFlowIds ?? []) as string[],
       } as DashboardDraftState;
     }
     if (version !== DASHBOARD_DRAFT_SCHEMA_VERSION) return createEmptyDashboardDraftState();
-    return parsed as DashboardDraftState;
+    const result = parsed as DashboardDraftState;
+    return {
+      ...result,
+      removedFlowIds: result.removedFlowIds ?? [],
+    };
   } catch {
     return createEmptyDashboardDraftState();
   }
@@ -81,8 +88,13 @@ export function mergeDashboardDrafts(shipped: DashboardShippedContent, drafts: D
     (group) => !removedGroupIds.has(group.id),
   );
 
+  const removedFlowIds = new Set(drafts.removedFlowIds ?? []);
+  const flows = mergeRecords(shipped.flows, drafts.flowPatches, drafts.addedFlows).filter(
+    (flow) => !removedFlowIds.has(flow.id),
+  );
+
   return {
-    flows: mergeRecords(shipped.flows, drafts.flowPatches, drafts.addedFlows),
+    flows,
     educationMaterials: mergeRecords(
       shipped.educationMaterials,
       drafts.educationMaterialPatches,

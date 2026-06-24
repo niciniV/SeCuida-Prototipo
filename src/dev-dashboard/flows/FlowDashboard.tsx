@@ -26,13 +26,16 @@ export function FlowDashboard({
   resources,
   onFlowChange,
   onFlowAdd,
+  onFlowRemove,
 }: {
   flows: GuidedFlow[];
   resources: EducationResource[];
   onFlowChange: (flowIndex: number, flowId: string, patch: Partial<GuidedFlow>) => void;
   onFlowAdd?: () => void;
+  onFlowRemove?: (flowId: string) => void;
 }) {
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(() => flows[0]?.id ?? null);
+  const [confirmDeleteFlowId, setConfirmDeleteFlowId] = useState<string | null>(null);
   const [activeDetailTab, setActiveDetailTab] = useState<FlowDetailTab>('editor');
 
   // Lifted States
@@ -91,7 +94,7 @@ export function FlowDashboard({
         <p className="font-body-md text-on-surface-variant">Nenhum fluxo disponível.</p>
         {onFlowAdd && (
           <Button className="mt-3" onClick={onFlowAdd}>
-            Novo fluxo
+            + Criar Novo Fluxo
           </Button>
         )}
       </section>
@@ -101,6 +104,7 @@ export function FlowDashboard({
   function handleSelectFlow(flowId: string) {
     setSelectedFlowId(flowId);
     setSelectedNodeId(null);
+    setConfirmDeleteFlowId(null);
   }
 
   function handleEditNode(nodeId: string) {
@@ -111,31 +115,104 @@ export function FlowDashboard({
   return (
     <section className="grid gap-stack-md lg:grid-cols-[280px_1fr]">
       <aside className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-4">
-        <h2 className="font-headline-sm text-on-surface mb-3">Fluxos</h2>
-        {flows.length > 1 ? (
-          <div className="mb-4 flex flex-col gap-1">
-            <label htmlFor="flow-select" className="font-label-md text-on-surface-variant">
-              Selecionar fluxo
-            </label>
-            <select
-              id="flow-select"
-              aria-label="Selecionar fluxo"
-              value={selectedFlow.id}
-              onChange={(e) => handleSelectFlow(e.target.value)}
-              className={`${inputClass} w-full`}
+        <div className="flex items-center gap-2 mb-3">
+          <svg
+            aria-hidden="true"
+            className="lucide lucide-folder text-primary h-5 w-5"
+            fill="none"
+            height="20"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+          </svg>
+          <h2 className="font-headline-sm text-on-surface" aria-label="Fluxos">Fluxos Ativos</h2>
+        </div>
+
+        <div className="mb-4 flex flex-col gap-2">
+          {flows.map((flow) => {
+            const isSelected = flow.id === selectedFlow.id;
+            return (
+              <div key={flow.id} className="flex flex-col gap-1.5 rounded-lg border border-outline-variant/30 p-2 bg-surface-container-lowest">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectFlow(flow.id)}
+                    className={`flex-1 rounded-lg px-3 py-2 text-left font-label-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${
+                      isSelected
+                        ? 'bg-primary text-on-primary'
+                        : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
+                    }`}
+                  >
+                    {flow.title}
+                  </button>
+                  {flows.length > 1 && confirmDeleteFlowId !== flow.id && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteFlowId(flow.id)}
+                      className="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                      aria-label={`Remover fluxo ${flow.title}`}
+                    >
+                      <svg
+                        aria-hidden="true"
+                        className="lucide lucide-trash h-4 w-4"
+                        fill="none"
+                        height="16"
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        viewBox="0 0 24 24"
+                        width="16"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {flows.length > 1 && confirmDeleteFlowId === flow.id && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (flow.id === selectedFlowId) {
+                        const otherFlows = flows.filter((f) => f.id !== flow.id);
+                        if (otherFlows.length > 0) {
+                          setSelectedFlowId(otherFlows[0].id);
+                        } else {
+                          setSelectedFlowId(null);
+                        }
+                      }
+                      onFlowRemove?.(flow.id);
+                      setConfirmDeleteFlowId(null);
+                    }}
+                    className="w-full rounded-lg bg-error px-3 py-2 text-xs font-label-md text-on-error hover:bg-error/90 transition-colors"
+                    aria-label={`Confirmar exclusão de ${flow.title}`}
+                  >
+                    Confirmar exclusão de {flow.title}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {onFlowAdd && (
+            <button
+              type="button"
+              onClick={onFlowAdd}
+              className="mt-2 w-full rounded-lg border border-dashed border-outline-variant bg-transparent py-2 text-center font-label-md text-primary hover:bg-surface-container transition-colors"
             >
-              {flows.map((flow) => (
-                <option key={flow.id} value={flow.id}>
-                  {flow.title}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
-          <div className="mb-4">
-            <div className="mt-2 font-label-md text-on-surface-variant">{selectedFlow.title}</div>
-          </div>
-        )}
+              + Criar Novo Fluxo
+            </button>
+          )}
+        </div>
 
         {activeDetailTab === 'editor' && (
           <div className="mt-4 flex flex-col gap-4">

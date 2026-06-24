@@ -21,6 +21,7 @@ const emptyDraft: DashboardDraftState = {
   addedGroups: [],
   defaultGroupOrder: 0,
   removedGroupIds: [],
+  removedFlowIds: [],
   updatedAt: '2026-05-22T00:00:00.000Z',
 };
 
@@ -40,6 +41,7 @@ describe('dashboardStorage', () => {
       addedGroups: [],
       defaultGroupOrder: 0,
       removedGroupIds: [],
+      removedFlowIds: [],
       updatedAt: null,
     });
   });
@@ -140,6 +142,7 @@ describe('dashboardStorage', () => {
     expect(draft.addedGroups).toEqual([]);
     expect(draft.defaultGroupOrder).toBe(0);
     expect(draft.removedGroupIds).toEqual([]);
+    expect(draft.removedFlowIds).toEqual([]);
   });
 
   it('migrates v1 localStorage value to v2 preserving existing fields', () => {
@@ -165,6 +168,7 @@ describe('dashboardStorage', () => {
     expect(loaded.addedGroups).toEqual([]);
     expect(loaded.defaultGroupOrder).toBe(0);
     expect(loaded.removedGroupIds).toEqual([]);
+    expect(loaded.removedFlowIds).toEqual([]);
   });
 
   it('resets to empty v2 draft for unknown schema version', () => {
@@ -181,10 +185,11 @@ describe('dashboardStorage', () => {
     const loaded = loadDashboardDrafts();
 
     expect(loaded.schemaVersion).toBe(DASHBOARD_DRAFT_SCHEMA_VERSION);
-    expect(loaded.flowPatches).toEqual([]);
+    expect(loaded.groupPatches).toEqual([]);
     expect(loaded.addedGroups).toEqual([]);
     expect(loaded.defaultGroupOrder).toBe(0);
     expect(loaded.removedGroupIds).toEqual([]);
+    expect(loaded.removedFlowIds).toEqual([]);
     expect(loaded.updatedAt).toBeNull();
   });
 });
